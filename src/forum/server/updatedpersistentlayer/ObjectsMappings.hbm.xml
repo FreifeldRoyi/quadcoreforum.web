@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping package="forum.server.updatedpersistentlayer">
+    <class name="ThreadType" table="Threads">
+
+  <id name="threadID" column="threadID" >
+  </id>
+  <property name="topic" column="topic" ></property>
+  <property name="fatherSubjectID" column="FatherSubjectID"></property>
+  <property name="startMessageID" column="StartMessageID"></property>
+  <property name="lastMessageID" column="LastMessageID" ></property>
+    <property name="numOfViews" column="numOfViews" ></property>
+    <property name="numOfResponses" column="numOfResponses" ></property>
+  </class>
+    <class name="SubjectType" table="subjects">
+
+  <id name="subjectID" column="SubjectID" >
+  </id>
+  <property name="lastAddedMessageID" column="lastAddedMessageID" ></property>
+     <property name="name" column="Name" ></property>
+       <property name="description" column="Description" ></property>
+       <property name="fatherID" column="FatherID"></property>
+       <set name="subSubjectsIDs" table="subsubjects">
+            <key column="FatherID"></key>
+            <element type="long" column="SubSubjectID"></element>
+        </set>      
+            <set name="threadsIDs" table="subjectsthreads">
+            <key column="SubjectID"></key>
+            <element type="long" column="ThreadID"></element>
+        </set>      
+       
+       
+  </class>
+   <class name="MessageType" table="messages">
+
+  <id name="messageID" column="MessageID" >
+  </id>
+  <property name="authorID" column="AuthorID" ></property>
+   <property name="title" column="Title" ></property>
+     <property name="content" column="Content" ></property>
+       <property name="postTime" column="PostTime" ></property>
+        <property name="fatherID" column="FatherID" ></property>
+        
+            <set name="repliesIDs" table="replies">
+            <key column="FatherID"></key>
+            <element type="long" column="ReplyID"></element>
+        </set>      
+  
+  </class>
+  
+   <class name="MemberType" table="members">
+
+  <id name="userID" column="UserID" >
+  </id>
+  <property name="username" column="Username" ></property>
+   <property name="email" column="Email" ></property>
+     <property name="password" column="UserPassword" ></property>
+       <property name="lastName" column="LastName" ></property>
+        <property name="firstName" column="FirstName" ></property>
+        <property name="userType" column="UserType" ></property>
+        
+      <set name="permissions" table="UsersPermissions">
+            <key column="UserID"></key>
+            <element type="string" column="Permission"/>
+        </set>        
+  </class>
+  
+  
+</hibernate-mapping>
+
+ 
+ 
+   <!--  belongs to the members : protected List<Long> postedMessagesIDs;-->
+    
+   
+  
+   
+   <!-- belongs to the messages class: protected List<Long> repliesIDs;-->
+  
