@@ -6,11 +6,14 @@ package forum.client;
 import com.google.gwt.core.client.EntryPoint; 
 import com.google.gwt.core.client.GWT; 
 import com.google.gwt.user.client.rpc.AsyncCallback; 
+import com.google.gwt.user.client.ui.RootPanel;
 //import com.google.gwt.user.client.ui.PasswordTextField; 
+import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.Field;
+import com.extjs.gxt.ui.client.widget.form.FormPanel;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.Validator;
 
@@ -18,9 +21,6 @@ import forum.shared.tcpcommunicationlayer.RegisterMessage;
 import forum.shared.tcpcommunicationlayer.ServerResponse;
 
 import com.extjs.gxt.ui.client.widget.Info;
-import com.extjs.gxt.ui.client.widget.Window;
-
-import com.extjs.gxt.ui.client.widget.layout.FormLayout;
 
 
 /** 
@@ -43,14 +43,15 @@ public class QuadCoreForumWeb implements EntryPoint {
 	private final ControllerServiceAsync controlAsync = GWT.create(ControllerService.class); 
 
 	public void onModuleLoad() {  
-		final Window tRegistrationPanel = new Window();
-		tRegistrationPanel.setLayout(new FormLayout());
+		//final Window tRegistrationPanel = new Window();
+		FormPanel tRegistrationPanel = new FormPanel();
+
+//		tRegistrationPanel.setLayout(new FormLayout());
 		tRegistrationPanel.setAutoHeight(true);
 		//tRegistrationPanel.setAutoWidth(true);
-		tRegistrationPanel.setModal(true);
+		//tRegistrationPanel.setModal(true);
 
-		//		FormPanel tRegistrationPanel = new FormPanel();
-
+		
 
 		username.setFieldLabel("Username");
 		username.setMinLength(4);
@@ -74,8 +75,19 @@ public class QuadCoreForumWeb implements EntryPoint {
 		firstName.setAllowBlank(false);
 		firstName.setAllowBlank(false);
 
-		email.setFieldLabel("E-mail");		
-		email.setRegex(".+@.+\\.[a-z]+");
+
+		
+		email.setFieldLabel("E-mail");
+		email.setValidator(new Validator()  {
+			
+			public String validate(Field<?> field, String value) {
+				if (!value.matches(".+@.+\\.[a-z]+"))
+						return "Invaild address. The email address must be in the form: username@domain.extension";
+				return null;
+			}
+		});
+		
+//		email.setRegex(".+@.+\\.[a-z]+");
 		email.setAllowBlank(false);
 
 		username.setValidateOnBlur(false);
@@ -93,9 +105,10 @@ public class QuadCoreForumWeb implements EntryPoint {
 		lastName.setValidateOnBlur(false);
 		email.setValidateOnBlur(false);
 
+		confirmEmail.setAllowBlank(false);
+
 		confirmEmail.setFieldLabel("Confirm Email");
 		confirmEmail.setValidator(new Validator() {
-
 			public String validate(Field<?> field, String value) {
 				if (value.equals(email.getValue()))
 					return null;
@@ -121,6 +134,7 @@ public class QuadCoreForumWeb implements EntryPoint {
 		email.setLabelStyle("padding-left: 0.5cm; padding-top: 0.35cm; padding-bottom: 0.25cm; width: 4cm");
 		confirmEmail.setLabelStyle("padding-left: 0.5cm; padding-top: 0.35cm; padding-bottom: 0.25cm; width: 4cm");
 
+		
 		tRegistrationPanel.add(username);
 		tRegistrationPanel.add(password);
 		tRegistrationPanel.add(confirmPassword);
@@ -198,15 +212,16 @@ public class QuadCoreForumWeb implements EntryPoint {
 		confirmEmail.setValue("ff@gmg.com");
 		 */
 
+		tRegistrationPanel.setButtonAlign(HorizontalAlignment.CENTER);
 		tRegistrationPanel.addButton(registerButton);
 		tRegistrationPanel.addButton(cancelButton);
-		tRegistrationPanel.setStyleName("registrationForm");
+		//tRegistrationPanel.setStyleName("registrationForm");
 		//tRegistrationPanel.setLabelWidth(100);
 		tRegistrationPanel.setHeading("Registration Form");
-		tRegistrationPanel.setWidth(400);
-		tRegistrationPanel.setBlinkModal(false);
+		tRegistrationPanel.setWidth(450);
+		//tRegistrationPanel.setBlinkModal(false);
 
-		tRegistrationPanel.show();
+		//tRegistrationPanel.show();
 
 
 
@@ -234,7 +249,7 @@ public class QuadCoreForumWeb implements EntryPoint {
 							String tEncodedResult = result.getResponse();
 							if (tEncodedResult.startsWith("registersuccess\t")) {
 								Info.display("Register Success", "The registration process was completed successfully!");
-								tRegistrationPanel.hide();
+								//tRegistrationPanel.hide();
 							}
 							else if (tEncodedResult.startsWith("registererror\t")) {
 								String[] tSplittedMessage = tEncodedResult.split("\t");
@@ -248,13 +263,20 @@ public class QuadCoreForumWeb implements EntryPoint {
 
 
 
-		//		RootPanel.get("registerPanelId").add(tRegistrationPanel); 
+				RootPanel.get("registerPanelId").add(tRegistrationPanel); 
 
 
 	} 
 
 
-	public boolean checkDataValidity() { 
+	public boolean checkDataValidity() {
+		username.clearInvalid();
+		password.clearInvalid();
+		confirmPassword.clearInvalid();
+		lastName.clearInvalid();
+		firstName.clearInvalid();
+		email.clearInvalid();
+		confirmEmail.clearInvalid();
 		return username.validate() && password.validate() && confirmPassword.validate() &&
 		lastName.validate() && firstName.validate() && email.validate() && confirmEmail.validate();
 	} 
