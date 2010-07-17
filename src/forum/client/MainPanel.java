@@ -18,6 +18,7 @@ import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FlowData;
 import com.extjs.gxt.ui.client.widget.layout.VBoxLayout;
+import com.extjs.gxt.ui.client.widget.layout.BoxLayout.BoxLayoutPack;
 import com.extjs.gxt.ui.client.widget.layout.VBoxLayout.VBoxLayoutAlign;
 
 public class MainPanel extends LayoutContainer
@@ -53,6 +54,12 @@ public class MainPanel extends LayoutContainer
 		BorderLayoutData centerData = new BorderLayoutData(LayoutRegion.CENTER);
 		centerData.setSplit(true);
 		centerData.setMargins(new Margins(0));
+		
+		VBoxLayout mainLayout = new VBoxLayout();
+		mainLayout.setPadding(new Padding(5));
+		mainLayout.setVBoxLayoutAlign(VBoxLayoutAlign.CENTER);
+		mainLayout.setPack(BoxLayoutPack.CENTER);
+		this.mainContent.setLayout(mainLayout);
 		
 		panel.add(this.mainContent, centerData);
 	}
