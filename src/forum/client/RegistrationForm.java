@@ -25,7 +25,7 @@ import forum.shared.tcpcommunicationlayer.ServerResponse;
  * @author Freifeld Royi
  *
  */
-public class RegistrationForm  extends LayoutContainer
+public class RegistrationForm  extends FormPanel
 {
 	protected void onRender(Element target, int index)
 	{
@@ -41,9 +41,12 @@ public class RegistrationForm  extends LayoutContainer
 		final TextField<String> lastName = new TextField<String>(); 
 		final ControllerServiceAsync controlAsync = GWT.create(ControllerService.class); 
 		
-		FormPanel tRegistrationPanel = new FormPanel();
+		System.out.println("please be here");
+		
+		//FormPanel tRegistrationPanel = new FormPanel();
 
-		tRegistrationPanel.setAutoHeight(true);
+		//tRegistrationPanel.setAutoHeight(true);
+		this.setAutoHeight(true);
 
 		username.setFieldLabel("Username");
 		username.setMinLength(4);
@@ -131,20 +134,37 @@ public class RegistrationForm  extends LayoutContainer
 		confirmEmail.setLabelStyle("padding-left: 0.5cm; padding-top: 0.35cm; padding-bottom: 0.25cm; width: 4cm");
 
 
-		tRegistrationPanel.add(username);
+		/*tRegistrationPanel.add(username);
 		tRegistrationPanel.add(password);
 		tRegistrationPanel.add(confirmPassword);
 		tRegistrationPanel.add(lastName);
 		tRegistrationPanel.add(firstName);
 		tRegistrationPanel.add(email);
 		tRegistrationPanel.add(confirmEmail);
+		
 
 
 		tRegistrationPanel.setButtonAlign(HorizontalAlignment.CENTER);
 		tRegistrationPanel.addButton(registerButton);
 		tRegistrationPanel.addButton(cancelButton);
 		tRegistrationPanel.setHeading("Registration Form");
-		tRegistrationPanel.setWidth(450);
+		tRegistrationPanel.setWidth(450);*/
+		
+		this.add(username);
+		this.add(password);
+		this.add(confirmPassword);
+		this.add(lastName);
+		this.add(firstName);
+		this.add(email);
+		this.add(confirmEmail);
+		
+
+
+		this.setButtonAlign(HorizontalAlignment.CENTER);
+		this.addButton(registerButton);
+		this.addButton(cancelButton);
+		this.setHeading("Registration Form");
+		this.setWidth(450);
 
 		registerButton.addSelectionListener(new SelectionListener<ButtonEvent>() 
 				{
