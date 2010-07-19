@@ -9,6 +9,7 @@ import forum.server.updatedpersistentlayer.DatabaseUpdateException;
 import forum.server.updatedpersistentlayer.pipe.user.exceptions.MemberAlreadyExistsException;
 import forum.shared.tcpcommunicationlayer.RegisterMessage;
 import forum.shared.tcpcommunicationlayer.ServerResponse;
+import forum.shared.tcpcommunicationlayer.ViewSubjectsMessage;
 
 @SuppressWarnings("serial")
 public class ControllerServiceImpl extends RemoteServiceServlet implements
@@ -42,5 +43,11 @@ ControllerService {
 			returnObj.setResponse("registererror\t" + e.getMessage());
 		}
 		return returnObj;
+	}
+
+	@Override
+	public ServerResponse getSubjects(ViewSubjectsMessage data) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

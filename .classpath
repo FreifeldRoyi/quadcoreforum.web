@@ -23,5 +23,6 @@
 	<classpathentry kind="lib" path="lib/hibernate/javassist-3.9.0.GA.jar"/>
 	<classpathentry kind="lib" path="lib/hibernate/jta-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/gxt.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/quadcoreforum"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
