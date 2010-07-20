@@ -30,6 +30,7 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	public void setChildren(Collection<BaseTreeModel> children) {
 		for (BaseTreeModel child : children)
 			this.add(child);
+		
 	}
 
 	public long getID() {

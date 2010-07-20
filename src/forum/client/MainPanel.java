@@ -9,11 +9,15 @@ import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.util.Margins;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
-import com.extjs.gxt.ui.client.widget.Viewport;
+import com.extjs.gxt.ui.client.widget.TabItem;
+import com.extjs.gxt.ui.client.widget.TabPanel;
 import com.extjs.gxt.ui.client.widget.button.ToggleButton;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
+import com.extjs.gxt.ui.client.widget.layout.VBoxLayout;
+import com.extjs.gxt.ui.client.widget.layout.VBoxLayoutData;
+import com.extjs.gxt.ui.client.widget.layout.VBoxLayout.VBoxLayoutAlign;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
@@ -23,26 +27,29 @@ public class MainPanel extends LayoutContainer
 { 
 	/*All private Members*/
 	private final ContentPanel miscellaneousPanel = new ContentPanel();
-	private final ContentPanel mainContentPanel = new ContentPanel();
 	private final ContentPanel settingsPanel = new ContentPanel();  
 	private final ContentPanel navigatorPanel = new ContentPanel();  
 
-	private AsyncThreadsTableGrid threadsTable = new AsyncThreadsTableGrid();
-	
-	private final BorderLayout rootPanelLayout = new BorderLayout();
+	private final TabPanel mainContentPanel = new TabPanel();
 
+
+	private final BorderLayout rootPanelLayout = new BorderLayout();
+	private final BorderLayoutData westData = new BorderLayoutData(LayoutRegion.WEST, 300, 100, Short.MAX_VALUE);
 
 	final ControllerServiceAsync service = (ControllerServiceAsync) Registry.get("Servlet");
 
 	protected void onRender(Element target, int index) {  
 		super.onRender(target, index);
 
+		
 		setLayout(rootPanelLayout); 
 		setStyleAttribute("padding", "10px");  
 
 		this.mainContentPanelInit();
 		this.miscellaneousPanelInit();
 
+		
+		
 		this.layout();
 
 		Window.addWindowClosingHandler(new Window.ClosingHandler() {
@@ -55,22 +62,69 @@ public class MainPanel extends LayoutContainer
 					});
 			}
 		});
-		
+
 	} 
 
 	private void mainContentPanelInit() {
-		this.mainContentPanel.setHeading("Main Content");
+//		this.mainContentPanel.setHeading("Main Content");
 		this.mainContentPanel.setBorders(true);
-
+		this.mainContentPanel.setMinTabWidth(115);  
+		this.mainContentPanel.setResizeTabs(true);  
+		this.mainContentPanel.setAnimScroll(true);  
+		this.mainContentPanel.setTabScroll(true);  
+		this.mainContentPanel.setCloseContextMenu(true);
+		
 		//Main Content Panel
 		BorderLayoutData centerData = new BorderLayoutData(LayoutRegion.CENTER, 0, 0, Short.MAX_VALUE);
 		centerData.setSplit(true);
 		centerData.setMargins(new Margins(0));
 		centerData.setCollapsible(false);
 
-		this.mainContentPanel.add(threadsTable);
-		
+
+
+
+//		this.mainContentPanel.setLayout(new FitLayout());
+
+		this.initializeThreadsPanel();
+
+//		this.mainContentPanel.add(threadsPanel);
+
 		add(this.mainContentPanel, centerData);
+		
+		Registry.register("maincontentpanel", mainContentPanel);
+
+	}
+
+	private void initializeThreadsPanel() {
+		System.out.println("initttttttttttttttttttt");
+		SubjectTabItem tDefaultItem = new SubjectTabItem(null);
+		mainContentPanel.add(tDefaultItem);
+		mainContentPanel.setSelection(tDefaultItem);
+
+
+	}
+
+	private void miscellaneousPanelInit() {
+		this.miscellaneousPanel.setHeading("QuadCoreForum");
+		this.miscellaneousPanel.setBorders(true);
+		westData.setSplit(false);
+		westData.setCollapsible(true);
+		westData.setFloatable(true);
+		westData.setMargins(new Margins(0,5,0,0));
+		add(this.miscellaneousPanel, westData);
+
+		VBoxLayout tMainContentLayout = new VBoxLayout();
+
+		tMainContentLayout.setVBoxLayoutAlign(VBoxLayoutAlign.STRETCH);
+		tMainContentLayout.setAdjustForFlexRemainder(true);
+
+
+		miscellaneousPanel.setLayout(tMainContentLayout);
+
+		this.settingsPanelInit();
+		this.navigationPanelInit();
+		miscellaneousPanel.layout();
+
 	}
 
 	private void settingsPanelInit() {
@@ -81,6 +135,13 @@ public class MainPanel extends LayoutContainer
 		settingsPanel.setBodyStyle("fontSize: 12px; padding: 0px");  
 		settingsPanel.collapse();
 		this.loadSettingsLinks();
+
+
+		VBoxLayoutData flex = new VBoxLayoutData(new Margins(0, 0, 5, 0));  
+		flex.setFlex(2);  
+		miscellaneousPanel.add(settingsPanel, flex);  
+
+
 		miscellaneousPanel.add(settingsPanel);
 		/*
 		settingsPanel.addListener(Events.Collapse, new collap {
@@ -91,51 +152,36 @@ public class MainPanel extends LayoutContainer
 				super.resizeEnd(re);
 			}
 		});*/
-		
+
 		settingsPanel.setBottomComponent(this.navigatorPanel);
-		
+
 	}
 
 	private void navigationPanelInit() {
-		
+
 		navigatorPanel.setHeading("Navigation");  
 		navigatorPanel.setBorders(false);
 		navigatorPanel.setBodyStyle("" +
-				"fontSize: 12px; padding: 0px");  
+		"fontSize: 12px; padding: 0px");  
 		navigatorPanel.setScrollMode(Scroll.AUTOY);
 		navigatorPanel.setCollapsible(false);
 
-		Viewport v = new Viewport();
-		v.add(new AsyncSubjectsTreeGrid(threadsTable));
-		v.setLayout(new FitLayout());
-		navigatorPanel.add(v);
+		navigatorPanel.add(new AsyncSubjectsTreeGrid());
 		this.navigatorPanel.setTopComponent(this.settingsPanel);
-		
-		
-		
+
+		navigatorPanel.setLayout(new FitLayout());
+
+		VBoxLayoutData flex = new VBoxLayoutData(new Margins(0));  
+		flex.setFlex(6);  
+		miscellaneousPanel.add(navigatorPanel, flex);  
+
+
+
 		miscellaneousPanel.add(navigatorPanel);
-	}
-
-	private void miscellaneousPanelInit() {
-		this.miscellaneousPanel.setHeading("QuadCoreForum");
-		this.miscellaneousPanel.setBorders(true);
-		BorderLayoutData westData = new BorderLayoutData(LayoutRegion.WEST, 300, 100, 300);
-		westData.setSplit(false);
-		westData.setCollapsible(true);
-		westData.setFloatable(true);
-		westData.setMargins(new Margins(0,5,0,0));
-		add(this.miscellaneousPanel, westData);
-//		miscellaneousPanel.setLayout(new AnchorLayout());
-
-		
-		
-		this.settingsPanelInit();
-		this.navigationPanelInit();
-		miscellaneousPanel.layout();
 
 	}
 
-	
+
 	private void loadSettingsLinks() {
 		this.settingsPanel.add(createButton("Refresh", 
 				new Listener<ButtonEvent>() {
@@ -160,7 +206,7 @@ public class MainPanel extends LayoutContainer
 
 			@Override
 			public void handleEvent(ButtonEvent be) {
-/*
+				/*
 				service.getSubjects(-1, 
 						new AsyncCallback<ServerResponse>() {
 
@@ -200,14 +246,14 @@ public class MainPanel extends LayoutContainer
 				}));
 		 */	
 	}
-
+/*
 	private void addToMainContent(LayoutContainer c)
 	{
 		this.mainContentPanel.removeAll();
 		this.mainContentPanel.add(c);
 		this.mainContentPanel.layout();
 	}
-
+*/
 	private ToggleButton createButton(String text, Listener<ButtonEvent> l)
 	{
 		ToggleButton btn = new ToggleButton(text);
