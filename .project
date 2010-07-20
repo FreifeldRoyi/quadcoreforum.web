@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>quadcoreforumweb</name>
+	<name>web.quadcoreforum</name>
 	<comment></comment>
 	<projects>
+		<project>quadcoreforum</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -25,4 +26,11 @@
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>com.google.gwt.eclipse.core.gwtNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>updatedpersistentlayer</name>
+			<type>2</type>
+			<location>C:/Documents and Settings/Sepetnitsky Vitali/workspace/quadcoreforum/src/forum/server/updatedpersistentlayer</location>
+		</link>
+	</linkedResources>
 </projectDescription>

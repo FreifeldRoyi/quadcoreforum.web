@@ -38,3 +38,7 @@ h1 {
 .registrationForm {
 	width: 350;
 }
+
+.topLevelSubjects{
+    fontSize: 12px;
+}

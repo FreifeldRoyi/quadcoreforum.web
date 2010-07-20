@@ -19,4 +19,8 @@
   <source path='client'/>
   <source path='shared'/>
 
+	<extend-configuration-property name="rpc.blacklist" 
+	value="com.google.gwt.user.client.ui.*Collection"/>
+
+
 </module>

@@ -1,5 +1,6 @@
 com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException, true, true, true, true, com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException/3936916533, 3936916533
 forum.client.ControllerService, false, false, false, false, _, 2113027236
+forum.shared.exceptions.database.DatabaseUpdateException, true, true, false, false, forum.shared.exceptions.database.DatabaseUpdateException/3926489697, 3926489697
 forum.shared.tcpcommunicationlayer.ClientMessage, false, false, true, false, forum.shared.tcpcommunicationlayer.ClientMessage/1651951274, 1651951274
 forum.shared.tcpcommunicationlayer.RegisterMessage, false, false, true, true, forum.shared.tcpcommunicationlayer.RegisterMessage/1388033160, 1388033160
 forum.shared.tcpcommunicationlayer.ServerResponse, true, true, false, false, forum.shared.tcpcommunicationlayer.ServerResponse/793686230, 793686230

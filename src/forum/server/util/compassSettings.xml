@@ -1,0 +1,25 @@
+<compass-core-config xmlns="http://www.compass-project.org/schema/core-config"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.compass-project.org/schema/core-config
+           http://www.compass-project.org/schema/compass-core-config-2.2.xsd">
+
+   <compass name="default">
+      <connection>
+         <jdbc
+         	dialect="org.apache.lucene.store.jdbc.dialect.MySQLDialect">
+         	<dataSourceProvider>
+         		<driverManager
+         			url="jdbc:mysql://localhost/quadcoreforumdb?emulateLocators=true" username="root"
+         			password="1234" driverClass="com.mysql.jdbc.Driver"></driverManager>
+         	</dataSourceProvider>
+         </jdbc>
+      </connection>
+   
+      <mappings>
+<!--          <class name="forum.server.domainlayer.interfaces.UIMessage"></class>-->
+          <class name="forum.server.domainlayer.message.ForumMessage"></class>
+      </mappings>
+   
+   </compass>
+</compass-core-config>
+
