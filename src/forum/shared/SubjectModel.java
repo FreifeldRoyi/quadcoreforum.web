@@ -11,20 +11,14 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	 */
 	private static final long serialVersionUID = 3965074362252069771L;
 
-	private long id;
-	private String name;
-	private String description;
-	private long subjectsNumber;
-	private long messagesNumber;
-
 	public SubjectModel() {}
 	
 	public SubjectModel(long id, String name, String description, long subjectsNum, long messagesNum) {
-		set("id", id);
-		set("name", name);
-		this.description = description;
-		this.subjectsNumber = subjectsNum;
-		this.messagesNumber = messagesNum;
+		setId(id);
+		setName(name);
+		setDescription(description);
+		setSubjectsNumber(subjectsNum);
+		setMessagesNumber(messagesNum);
 	}
 
 	public void setChildren(Collection<BaseTreeModel> children) {
@@ -34,7 +28,7 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	}
 
 	public long getID() {
-		return (Long) get("id");
+		return get("id");
 	}
 
 	public String getName() {
@@ -42,15 +36,15 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	}
 
 	public String getDescription() {
-		return description;
+		return get("description");
 	}
 
 	public String getSubjectsNumber() {
-		return subjectsNumber + "";
+		return get("subjectsNumber") + "";
 	}
 
 	public String getMessagesNumber() {
-		return messagesNumber + "";
+		return get("messagesNumber") + "";
 	}
 
 	/**
@@ -71,21 +65,21 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	 * @param description the description to set
 	 */
 	public void setDescription(String description) {
-		this.description = description;
+		set("description", description);
 	}
 
 	/**
 	 * @param subjectsNumber the subjectsNumber to set
 	 */
 	public void setSubjectsNumber(long subjectsNumber) {
-		this.subjectsNumber = subjectsNumber;
+		set("subjectsNumber", subjectsNumber);
 	}
 
 	/**
 	 * @param messagesNumber the messagesNumber to set
 	 */
 	public void setMessagesNumber(long messagesNumber) {
-		this.messagesNumber = messagesNumber;
+		set("messagesNumber", messagesNumber);
 	}
 
 	public String toString() {

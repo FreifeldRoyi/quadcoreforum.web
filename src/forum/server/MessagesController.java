@@ -13,12 +13,15 @@ import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 
 import forum.server.domainlayer.ForumFacade;
+import forum.server.domainlayer.interfaces.UIMessage;
 import forum.server.domainlayer.interfaces.UISubject;
 import forum.server.domainlayer.interfaces.UIThread;
 import forum.server.updatedpersistentlayer.DatabaseRetrievalException;
 import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
+import forum.shared.MessageModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
+import forum.shared.exceptions.message.MessageNotFoundException;
 
 /**
  * @author sepetnit
@@ -123,6 +126,73 @@ public class MessagesController {
 		catch (DatabaseRetrievalException e) {
 			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 		}
+	}
+
+	public MessageModel getMessageByID(long messageID) throws MessageNotFoundException,
+	forum.shared.exceptions.database.DatabaseRetrievalException{
+		try {
+			return this.messageToMessageModelConvertor(facade.getMessageByID(messageID));
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e) {
+			throw new MessageNotFoundException(e.getID());
+		}
+		catch (DatabaseRetrievalException e) {
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+	}
+
+	/**
+	 * Finds and returns the user-name of the given message author
+	 * 
+	 * @param forum
+	 * 		An instance of the ForumFacade from which the data should be retrieved
+	 * @param message
+	 * 		The message whose author user-name should be retrieved
+	 * @return
+	 * 		The user-name of the message author
+	 */
+	private String getAuthorUsername(UIMessage message) {
+		String toReturn = "<Author-Not-Found>";
+		try {
+			toReturn = facade.getMemberByID(message.getAuthorID()).getUsername();
+		}
+		catch (Exception e) {}
+		return toReturn;		
+	}
+
+	public List<MessageModel> getReplies(long threadID, MessageModel father, boolean shouldUpdateViews) throws MessageNotFoundException,
+	forum.shared.exceptions.database.DatabaseRetrievalException {
+		try {
+			List<MessageModel> toReturn = new ArrayList<MessageModel>();
+			if (father == null)
+				toReturn.add(this.getMessageByID(threadID));
+			else {
+				Collection<UIMessage> tRetrievedMessages = facade.getReplies(father.getID(), shouldUpdateViews);
+
+				if (tRetrievedMessages.isEmpty()) {
+					return toReturn;
+				}
+				else {
+					Iterator<UIMessage> iter = tRetrievedMessages.iterator();
+					while (iter.hasNext()) {
+						toReturn.add(messageToMessageModelConvertor(iter.next()));			
+					}
+				}
+			}
+			return toReturn;
+
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e) {
+			throw new MessageNotFoundException(e.getID());
+		}
+		catch (DatabaseRetrievalException e) {
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+	}
+
+	private MessageModel messageToMessageModelConvertor(UIMessage message) {
+		return new MessageModel(message.getMessageID(), message.getAuthorID(), this.getAuthorUsername(message),
+				message.getTitle(), message.getContent(), message.getDateTime());		
 	}
 
 }

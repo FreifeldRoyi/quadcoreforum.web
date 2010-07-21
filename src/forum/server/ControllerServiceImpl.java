@@ -17,8 +17,11 @@ import forum.server.domainlayer.interfaces.UIUser;
 import forum.server.updatedpersistentlayer.DatabaseUpdateException;
 import forum.server.updatedpersistentlayer.pipe.user.exceptions.MemberAlreadyExistsException;
 import forum.server.updatedpersistentlayer.pipe.user.exceptions.NotConnectedException;
+import forum.shared.MessageModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
+import forum.shared.exceptions.database.DatabaseRetrievalException;
+import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.tcpcommunicationlayer.RegisterMessage;
 import forum.shared.tcpcommunicationlayer.ServerResponse;
 
@@ -132,5 +135,17 @@ ControllerService {
 			throws forum.shared.exceptions.message.SubjectNotFoundException,
 			forum.shared.exceptions.database.DatabaseRetrievalException {
 		return messagesController.getThreads(loadConfig, fatherID);
+	}
+
+	@Override
+	public MessageModel getMessageByID(long messageID)
+			throws MessageNotFoundException, DatabaseRetrievalException {
+		return messagesController.getMessageByID(messageID);
+	}
+
+	@Override
+	public List<MessageModel> getReplies(long threadID, MessageModel loadConfig, boolean shouldUpdateViews)
+			throws MessageNotFoundException, DatabaseRetrievalException {
+		return messagesController.getReplies(threadID, loadConfig, shouldUpdateViews);
 	}
 }

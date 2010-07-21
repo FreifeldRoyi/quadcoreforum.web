@@ -10,6 +10,11 @@ import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.extjs.gxt.ui.client.data.PagingLoader;
 import com.extjs.gxt.ui.client.data.RpcProxy;
+import com.extjs.gxt.ui.client.event.BaseEvent;
+import com.extjs.gxt.ui.client.event.Events;
+import com.extjs.gxt.ui.client.event.Listener;
+import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
+import com.extjs.gxt.ui.client.event.SelectionChangedListener;
 import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
@@ -43,6 +48,8 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	private Grid<ThreadModel> grid;
 	private ContentPanel cp;
 
+	private AsyncMessagesTreeGrid messagesTree;
+
 	/*	@Override
 	public void setTitle(String title) {
 		if (title != null)
@@ -53,6 +60,11 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	public AsyncThreadsTableGrid(long subjectID) {
 		System.out.println("initializing " + subjectID);
 		this.subjectID = subjectID;
+	}
+
+	public void setMessagesTree(AsyncMessagesTreeGrid messagesTree) {
+		System.out.println("setting  " + messagesTree != null);
+		this.messagesTree = messagesTree;
 	}
 
 	private void initializeProxy() {
@@ -163,8 +175,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 			public Object render(ThreadModel model, String property,
 					ColumnData config, int rowIndex, int colIndex,
 					ListStore<ThreadModel> store, Grid<ThreadModel> grid) {
-				System.out.println(model.toString());
-				System.out.println(config.style  + " 0");
 
 				if (rowIndex % 2 == 0)
 					config.style = getColoredRowStyle(config.style);
@@ -175,7 +185,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				+ model.get("topic")
 				+ "</a></b><br /><a style=\"color: #385F95; text-decoration: none;\"> Thread</a>";
 			}
-
 		});
 
 
@@ -213,7 +222,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 			public Object render(ThreadModel model, String property,
 					ColumnData config, int rowIndex, int colIndex,
 					ListStore<ThreadModel> store, Grid<ThreadModel> grid) {
-				System.out.println(config.style);
 
 				if (rowIndex % 2 == 0)
 					config.style = getColoredRowStyle(config.style);
@@ -249,6 +257,28 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		grid.setAutoExpandColumn("topic");  
 
 
+		Listener<BaseEvent> tRowSelectionListener = new Listener<BaseEvent>() {
+			@Override
+			public void handleEvent(BaseEvent be) {
+				System.out.println("row click event .................................. null");
+
+				invokeListenerOperation();
+			}
+		};
+		
+		grid.addListener(Events.RowClick, tRowSelectionListener);
+
+		
+		
+		grid.getSelectionModel().addSelectionChangedListener(new SelectionChangedListener<ThreadModel>() {
+			
+			@Override
+			public void selectionChanged(SelectionChangedEvent<ThreadModel> se) {
+				// TODO Auto-generated method stub
+				invokeListenerOperation();
+			}
+		});
+			
 
 
 		cp.add(grid);  
@@ -274,4 +304,16 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	private String getColoredRowStyle(String style) {
 		return this.getRowStyle(style, "background-color:#F5F9EE;");
 	}
+	
+	private void invokeListenerOperation() {
+		if (messagesTree != null) {
+			System.out.println("row click event .................................. "  +
+					grid.getSelectionModel().getSelectedItem().getId());
+			messagesTree.changeThreadID(grid.getSelectionModel().getSelectedItem().getId());
+		
+		
+	}
+	}
+
+	
 }

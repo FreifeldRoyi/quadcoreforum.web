@@ -114,7 +114,7 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 		tree.setStateful(true);  
 
 
-		tree.setId("statefullasynctreegrid");  
+		tree.setId("subjectstable");  
 		store.setKeyProvider(new ModelKeyProvider<SubjectModel>() {  
 			public String getKey(SubjectModel model) {  
 				return model.get("id") + "";  

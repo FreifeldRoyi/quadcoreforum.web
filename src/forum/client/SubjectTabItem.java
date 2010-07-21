@@ -6,7 +6,6 @@ package forum.client;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.Style.LayoutRegion;
 import com.extjs.gxt.ui.client.event.BaseEvent;
-import com.extjs.gxt.ui.client.event.EventType;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.util.Margins;
@@ -16,7 +15,6 @@ import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
-import com.extjs.gxt.ui.client.widget.toolbar.LabelToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 
 import forum.shared.SubjectModel;
@@ -34,6 +32,9 @@ public class SubjectTabItem extends TabItem {
 	private SubjectModel subject;
 
 	private ToolBar toolbar;
+	
+	private AsyncMessagesTreeGrid messagesTree;
+	
 	public SubjectTabItem(SubjectModel subject) {
 		super();
 		this.subject = subject;
@@ -70,11 +71,19 @@ public class SubjectTabItem extends TabItem {
 		this.add(threadsPanel, tNorthData);
 
 
-		ContentPanel tMessagesPanel = new ContentPanel();
 
-		tMessagesPanel.setHeading("Messages");
 
-		this.add(tMessagesPanel, tSouthData);
+
+		messagesTree = new AsyncMessagesTreeGrid();
+		
+		System.out.println("ggggggggggggggggggggggggg " + messagesTree != null);
+		threadsTable.setMessagesTree(messagesTree);
+		System.out.println("ggggggggggggggggggggggggg " + messagesTree != null);
+
+		
+		
+		
+		this.add(messagesTree, tSouthData);
 
 		this.addListener(Events.Select, new Listener<BaseEvent>() {
 			@Override

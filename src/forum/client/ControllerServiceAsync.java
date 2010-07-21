@@ -6,6 +6,7 @@ import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import forum.shared.MessageModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.tcpcommunicationlayer.RegisterMessage;
@@ -24,5 +25,9 @@ public interface ControllerServiceAsync {
 	void getThreads(PagingLoadConfig loadConfig, long fatherID, 
 			AsyncCallback<PagingLoadResult<ThreadModel>> callback);
 
-	
+	void getReplies(long threadID, MessageModel loadConfig, boolean shouldUpdateViews,
+			AsyncCallback<List<MessageModel>> tNewCallback);
+
+	void getMessageByID(long id, AsyncCallback<MessageModel> asyncCallback);
+
 }

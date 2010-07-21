@@ -4,12 +4,11 @@
 package forum.shared;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.extjs.gxt.ui.client.data.ModelData;  
+import com.extjs.gxt.ui.client.data.ModelData;
 /**
  * @author sepetnit
  *
@@ -35,7 +34,7 @@ public class ThreadModel implements ModelData, Serializable {
 	 * @return the id
 	 */
 	public long getId() {
-		return (Long)this.getId();
+		return this.get("id");
 	}
 	/**
 	 * @param id the id to set
@@ -64,7 +63,7 @@ public class ThreadModel implements ModelData, Serializable {
 	 * @return the responsesNumber
 	 */
 	public long getResponsesNumber() {
-		return (Long)this.get("responses");
+		return this.get("responses");
 	}
 	/**
 	 * @param responsesNumber the responsesNumber to set
@@ -76,7 +75,7 @@ public class ThreadModel implements ModelData, Serializable {
 	 * @return the viewsNumber
 	 */
 	public long getViewsNumber() {
-		return (Long)this.get("views");
+		return this.get("views");
 	}
 	/**
 	 * @param viewsNumber the viewsNumber to set
