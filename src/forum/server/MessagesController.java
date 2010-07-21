@@ -16,12 +16,17 @@ import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.interfaces.UIMessage;
 import forum.server.domainlayer.interfaces.UISubject;
 import forum.server.domainlayer.interfaces.UIThread;
+import forum.server.domainlayer.message.NotPermittedException;
 import forum.server.updatedpersistentlayer.DatabaseRetrievalException;
+import forum.server.updatedpersistentlayer.DatabaseUpdateException;
 import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
+import forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException;
 import forum.shared.MessageModel;
+import forum.shared.Permission;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.exceptions.message.MessageNotFoundException;
+import forum.shared.exceptions.user.NotRegisteredException;
 
 /**
  * @author sepetnit
@@ -47,12 +52,7 @@ public class MessagesController {
 			else {
 				Iterator<UISubject> iter = tRetrievedSubjects.iterator();
 				while (iter.hasNext()) {
-					UISubject tCurrent = iter.next();
-					System.out.println(tCurrent.toString());
-					toReturn.add(new SubjectModel(tCurrent.getID(), 
-							tCurrent.getName(), tCurrent.getDescription(),
-							tCurrent.getDeepNumOfSubSubjects(),
-							tCurrent.getDeepNumOfMessages()));
+					toReturn.add(subjectToSubjectModelConvertor(iter.next()));
 				}
 				System.out.println("cccccccc");
 				return toReturn;
@@ -71,9 +71,7 @@ public class MessagesController {
 	public SubjectModel getSubjectByID(long subjectID) throws forum.shared.exceptions.message.SubjectNotFoundException, 
 	forum.shared.exceptions.database.DatabaseRetrievalException {
 		try {
-			UISubject tFather = facade.getSubjectByID(subjectID);
-			return new SubjectModel(tFather.getID(), tFather.getName(), tFather.getDescription(),
-					tFather.getDeepNumOfSubSubjects(), tFather.getDeepNumOfMessages());
+			return subjectToSubjectModelConvertor(facade.getSubjectByID(subjectID));
 		}
 		catch (SubjectNotFoundException e) {
 			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
@@ -84,16 +82,204 @@ public class MessagesController {
 		}
 	}
 
+	public void deleteSubject(long userID, final long fatherID, 
+			long subjectID) throws forum.shared.exceptions.message.SubjectNotFoundException,
+			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException,
+			forum.shared.exceptions.database.DatabaseRetrievalException {
+		try {
+			facade.deleteASubject(userID, fatherID, subjectID);
+		}
+		catch (SubjectNotFoundException e) {
+			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException();
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+	}
+
+	public void modifyMessage(final long authorID, long messageID, String newTitle,
+			String newContent) throws MessageNotFoundException, NotRegisteredException,
+			forum.shared.exceptions.user.NotPermittedException, 
+			forum.shared.exceptions.database.DatabaseUpdateException {
+		try {
+			facade.updateAMessage(authorID, messageID, newTitle, newContent);
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e) {
+			throw new MessageNotFoundException(e.getID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(),
+					Permission.valueOf(e.getPermission().toString()));
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}
+	}
+
+	public void modifyThread(final long authorID, long threadID, 
+			String newTopic) throws NotRegisteredException, 
+			forum.shared.exceptions.user.NotPermittedException, 
+			forum.shared.exceptions.database.DatabaseUpdateException,
+			forum.shared.exceptions.message.ThreadNotFoundException {
+		try {
+			facade.updateAThread(authorID, threadID, newTopic);
+		}
+		catch (ThreadNotFoundException e) {
+			throw new forum.shared.exceptions.message.ThreadNotFoundException(e.getThreadID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(),
+					Permission.valueOf(e.getPermission().toString()));
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}		
+	}
+
+	public void modifySubject(final long authorID, long subjectID, 
+			String newName, String newDescription) throws 
+			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException,
+			forum.shared.exceptions.database.DatabaseUpdateException, 
+			forum.shared.exceptions.message.SubjectAlreadyExistsException,
+			forum.shared.exceptions.message.SubjectNotFoundException {
+		
+		try {
+			facade.updateASubject(authorID, subjectID, newName, newDescription);
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException e) {
+			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectAlreadyExistsException e) {
+			forum.shared.exceptions.message.SubjectAlreadyExistsException tExToThrow =
+				new forum.shared.exceptions.message.SubjectAlreadyExistsException(e.getSubjectID());
+			tExToThrow.setSubjectName(e.getSubjectName());
+			throw tExToThrow;
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(),
+					Permission.valueOf(e.getPermission().toString()));
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}		
+	}
+
+	public MessageModel addReplyToMessage(final long author, final long replyTo, 
+			final String title, final String content) throws MessageNotFoundException,
+			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException,
+			forum.shared.exceptions.database.DatabaseUpdateException {
+		try {
+			return messageToMessageModelConvertor(facade.addNewReply(author, replyTo, title, content));
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e) {
+			throw new MessageNotFoundException(e.getID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(), 
+					Permission.valueOf(e.getPermission().toString()));
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}
+	}
+
+	public void deleteMessage(long userID, long fatherID, long messageID) throws MessageNotFoundException,
+	NotRegisteredException, forum.shared.exceptions.user.NotPermittedException,
+	forum.shared.exceptions.database.DatabaseUpdateException {
+		try {
+			facade.deleteAMessage(userID, fatherID, messageID);
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e) {
+			throw new MessageNotFoundException(e.getID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(), 
+					Permission.valueOf(e.getPermission().toString()));
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}
+	}
+
+	public SubjectModel addNewSubject(final long userID, final long fatherID,
+			final String name, final String description) throws
+			NotRegisteredException,
+			forum.shared.exceptions.user.NotPermittedException, 
+			forum.shared.exceptions.database.DatabaseUpdateException,
+			forum.shared.exceptions.message.SubjectAlreadyExistsException,
+			forum.shared.exceptions.message.SubjectNotFoundException {
+		try {
+			return subjectToSubjectModelConvertor(facade.addNewSubject(userID, fatherID, name, description));
+		} 
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException e) {
+			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectAlreadyExistsException e) {
+			forum.shared.exceptions.message.SubjectAlreadyExistsException tExToThrow =
+				new forum.shared.exceptions.message.SubjectAlreadyExistsException(e.getSubjectID());
+			tExToThrow.setSubjectName(e.getSubjectName());
+			throw tExToThrow;
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(),
+					Permission.valueOf(e.getPermission().toString()));
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}		
+	}
+
+	public ThreadModel addNewThread (final long userID, final long subjectID, 
+			final String topic, final String title, final String content) throws
+			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException, 
+			forum.shared.exceptions.database.DatabaseUpdateException,
+			forum.shared.exceptions.message.SubjectNotFoundException {
+		try {
+			return threadToThreadModelConvertor(facade.openNewThread(userID, subjectID, topic, title, content));
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException e) {
+			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (NotPermittedException e) {
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(),
+					Permission.valueOf(e.getPermission().toString()));
+		}
+		catch (DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}		
+	}
+
 	public PagingLoadResult<ThreadModel> getThreads(
 			PagingLoadConfig loadConfig, long fatherID)
 			throws forum.shared.exceptions.message.SubjectNotFoundException,
 			forum.shared.exceptions.database.DatabaseRetrievalException {
-
-
-
-
-
-
 
 		System.out.println(loadConfig == null);
 		if (loadConfig != null) {
@@ -114,9 +300,7 @@ public class MessagesController {
 			List<UIThread> tThreadsAsList = new ArrayList<UIThread>(tThreads);
 
 			for (int i = loadConfig.getOffset(); i < limit; i++) {
-				UIThread tCurrentThread = tThreadsAsList.get(i);
-				tData.add(new ThreadModel(tCurrentThread.getID(), 
-						tCurrentThread.getTopic(), tCurrentThread.getNumOfResponses(), tCurrentThread.getNumOfViews()));
+				tData.add(threadToThreadModelConvertor(tThreadsAsList.get(i)));
 			}
 			return new BasePagingLoadResult<ThreadModel>(tData, loadConfig.getOffset(), tThreads.size());
 		} 
@@ -195,4 +379,14 @@ public class MessagesController {
 				message.getTitle(), message.getContent(), message.getDateTime());		
 	}
 
+	private SubjectModel subjectToSubjectModelConvertor(UISubject subject) {
+		return new SubjectModel(subject.getID(), subject.getName(),
+				subject.getDescription(), subject.getDeepNumOfSubSubjects(),
+				subject.getDeepNumOfMessages());
+	}
+	
+	private ThreadModel threadToThreadModelConvertor(UIThread thread) {
+		return new ThreadModel(thread.getID(), thread.getTopic(), 
+				thread.getNumOfResponses(), thread.getNumOfViews());
+	}
 }

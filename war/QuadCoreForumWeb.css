@@ -64,3 +64,11 @@ h1 {
 .oddRowsColor {
 	background-color: #FFFFFF;
 }
+
+.statusBarFontStyle {
+}
+
+.transparent {
+	padding: 0px;
+	background-color: rgb(240, 240, 240);
+}

@@ -1,8 +1,9 @@
 /**
  * 
  */
-package forum.client;
+package forum.shared;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import forum.shared.Permission;
@@ -11,7 +12,10 @@ import forum.shared.Permission;
  * @author sepetnit
  *
  */
-public class ConnectedUserData {
+public class ConnectedUserData implements Serializable {
+
+	private static final long serialVersionUID = 8075093857428645727L;
+
 	public enum UserType {
 		GUEST, MEMBER, MODERATOR, ADMIN
 	}
@@ -23,6 +27,8 @@ public class ConnectedUserData {
 	private Collection<Permission> permissions;
 	private String email;
 	private UserType type;
+
+	public ConnectedUserData() { }
 	
 	public ConnectedUserData(long userID, String username, String lastName, String firstName, String email,
 			String type, Collection<Permission> permissions) {
@@ -73,6 +79,14 @@ public class ConnectedUserData {
 	
 	public UserType getType() {
 		return this.type;
+	}
+
+	public void setID(long id) {
+		this.userID = id;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
 	}
 	
 	public void setFirstName(String firstName) {

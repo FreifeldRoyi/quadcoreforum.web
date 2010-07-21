@@ -36,8 +36,8 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import forum.client.ConnectedUserData.UserType;
 import forum.shared.MessageModel;
+import forum.shared.ConnectedUserData.UserType;
 
 public class AsyncMessagesTreeGrid extends LayoutContainer {  
 

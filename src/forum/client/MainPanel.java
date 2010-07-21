@@ -11,6 +11,7 @@ import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.TabItem;
 import com.extjs.gxt.ui.client.widget.TabPanel;
+import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.button.ToggleButton;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
@@ -22,6 +23,8 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+
+import forum.shared.ConnectedUserData.UserType;
 
 public class MainPanel extends LayoutContainer
 { 
@@ -105,6 +108,8 @@ public class MainPanel extends LayoutContainer
 	}
 
 	private void miscellaneousPanelInit() {
+
+		
 		this.miscellaneousPanel.setHeading("QuadCoreForum");
 		this.miscellaneousPanel.setBorders(true);
 		westData.setSplit(false);
@@ -113,48 +118,31 @@ public class MainPanel extends LayoutContainer
 		westData.setMargins(new Margins(0,5,0,0));
 		add(this.miscellaneousPanel, westData);
 
-		VBoxLayout tMainContentLayout = new VBoxLayout();
-
-		tMainContentLayout.setVBoxLayoutAlign(VBoxLayoutAlign.STRETCH);
-		tMainContentLayout.setAdjustForFlexRemainder(true);
-
-
-		miscellaneousPanel.setLayout(tMainContentLayout);
+		this.miscellaneousPanel.setLayout(new BorderLayout());
 
 		this.settingsPanelInit();
 		this.navigationPanelInit();
 		miscellaneousPanel.layout();
-
 	}
 
 	private void settingsPanelInit() {
 		settingsPanel.setHeading("Settings");  
 		settingsPanel.setBorders(false);  
-		settingsPanel.setCollapsible(true);
 		settingsPanel.setSize(300, 200);
 		settingsPanel.setBodyStyle("fontSize: 12px; padding: 0px");  
-		settingsPanel.collapse();
 		this.loadSettingsLinks();
+		
+		BorderLayoutData tNorthData= new BorderLayoutData(LayoutRegion.NORTH, 200, 200, Short.MAX_VALUE);
 
-
-		VBoxLayoutData flex = new VBoxLayoutData(new Margins(0, 0, 5, 0));  
-		flex.setFlex(2);  
-		miscellaneousPanel.add(settingsPanel, flex);  
-
-
-		miscellaneousPanel.add(settingsPanel);
-		/*
-		settingsPanel.addListener(Events.Collapse, new collap {
-			@Override
-			public void resizeEnd(ResizeEvent re) {
-			System.out.println("ddddddddddddddddddddddddddddddddddddd " + settingsPanel.getHeight());
-				// TODO Auto-generated method stub
-				super.resizeEnd(re);
-			}
-		});*/
-
-		settingsPanel.setBottomComponent(this.navigatorPanel);
-
+		settingsPanel.setCollapsible(true);
+		settingsPanel.setHideCollapseTool(true);
+		tNorthData.setCollapsible(true);
+		tNorthData.setFloatable(true);
+		this.miscellaneousPanel.add(this.settingsPanel, tNorthData);
+		
+		com.extjs.gxt.ui.client.widget.button.Button b = new Button();
+		b.setShim(true);
+		this.settingsPanel.add(b);
 	}
 
 	private void navigationPanelInit() {
@@ -167,20 +155,26 @@ public class MainPanel extends LayoutContainer
 		navigatorPanel.setCollapsible(false);
 
 		navigatorPanel.add(new AsyncSubjectsTreeGrid());
-		this.navigatorPanel.setTopComponent(this.settingsPanel);
 
 		navigatorPanel.setLayout(new FitLayout());
 
-		VBoxLayoutData flex = new VBoxLayoutData(new Margins(0));  
-		flex.setFlex(6);  
-		miscellaneousPanel.add(navigatorPanel, flex);  
+		BorderLayoutData tCenterData = new BorderLayoutData(LayoutRegion.CENTER, 0, 0, Short.MAX_VALUE);
 
-
-
-		miscellaneousPanel.add(navigatorPanel);
-
+		tCenterData.setMargins(new Margins(10, 0, 0, 0));
+		this.miscellaneousPanel.add(navigatorPanel, tCenterData);
 	}
 
+	public void setConnectedUserName() {
+		if (QuadCoreForumWeb.CONNECTED_USER_DATA.getType() == UserType.GUEST) {
+		this.miscellaneousPanel.setHeading("Hello Guest!");
+		this.settingsPanel.collapse();
+		}
+		else {
+			this.miscellaneousPanel.setHeading("Hello " + QuadCoreForumWeb.CONNECTED_USER_DATA.getLastName() +
+					" " + QuadCoreForumWeb.CONNECTED_USER_DATA.getFirstName() + "!");
+			this.settingsPanel.expand();
+		}
+	}
 
 	private void loadSettingsLinks() {
 		this.settingsPanel.add(createButton("Refresh", 
