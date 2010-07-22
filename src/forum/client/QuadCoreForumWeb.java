@@ -16,6 +16,7 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -29,7 +30,7 @@ public class QuadCoreForumWeb implements EntryPoint {
 	public static ConnectedUserData CONNECTED_USER_DATA = null;
 
 	private ToolBar statusBar; 
-	private ToolBar toolBar;
+	private MainPanelToolBar toolBar;
 
 	public static Status GUESTS_NUMBER_STATUS;  
 	public static Status MEMBERS_NUMBER_STATUS;
@@ -43,7 +44,21 @@ public class QuadCoreForumWeb implements EntryPoint {
 	
 	@Override
 	public void onModuleLoad() {
+		
 		Registry.register("Servlet", SERVICE);
+		
+		Window.addWindowClosingHandler(new Window.ClosingHandler() {
+			@Override
+			public void onWindowClosing(ClosingEvent event) {
+				if (QuadCoreForumWeb.CONNECTED_USER_DATA != null)
+					SERVICE.disconnectClient(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(), 
+							new AsyncCallback<Void>() {
+						public void onSuccess(Void result) {}
+						public void onFailure(Throwable caught) {}
+					});
+			}
+		});
+
 		mainPanel = new MainPanel();
 		Registry.register("MainPanel", mainPanel);
 
@@ -58,12 +73,18 @@ public class QuadCoreForumWeb implements EntryPoint {
 		this.initializeToolBar();
 		this.initializeStatusBar();
 
-
+		connectAsGuest();
 		Viewport v = new Viewport();  
 		v.setLayout(new FitLayout());  
 		v.add(mainContentPanel, new FitData(5)); // FitData controls the margins of the mp
 		RootPanel.get("mainPanelID").add(v);
 
+
+//		new AddReplyForm().show();
+
+	}
+
+	public static void connectAsGuest() {
 		SERVICE.addNewGuest(new AsyncCallback<ServerResponse>() {
 			@Override
 			public void onSuccess(ServerResponse result) {
@@ -75,7 +96,8 @@ public class QuadCoreForumWeb implements EntryPoint {
 				for (int i = 1; i < tSplitted.length; i++)
 					tPermissions.add(Permission.valueOf(tSplitted[i]));
 				QuadCoreForumWeb.CONNECTED_USER_DATA = new ConnectedUserData(connectedUserID, tPermissions);
-				mainPanel.setConnectedUserName();
+				((MainPanel)Registry.get("MainPanel")).changeLoginView();
+				((MainPanelToolBar)Registry.get("ToolBar")).switchToGuestView();
 			}
 
 			@Override
@@ -86,12 +108,11 @@ public class QuadCoreForumWeb implements EntryPoint {
 				}
 			}
 		});
-
-
 	}
-
+	
 	private void initializeToolBar() {
 		this.toolBar = new MainPanelToolBar();
+		Registry.register("ToolBar", toolBar);
 		this.mainContentPanel.setTopComponent(toolBar);  
 	}
 

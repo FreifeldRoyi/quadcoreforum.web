@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
@@ -64,6 +65,11 @@ public interface ControllerService extends RemoteService {
 
 	public ConnectedUserData login(long guestID, String username, String password) throws 
 	NotRegisteredException, WrongPasswordException, DatabaseRetrievalException;
+	
+	public ConnectedUserData logout(String username) throws 
+	forum.shared.exceptions.user.NotConnectedException,
+	forum.shared.exceptions.database.DatabaseUpdateException;
+
 	
 	/**
 	 * Deletes recursively the subject with the given id and all its content.
@@ -178,19 +184,5 @@ public interface ControllerService extends RemoteService {
 
 	 */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	List<Object> searchByAuthor(String username);
 }

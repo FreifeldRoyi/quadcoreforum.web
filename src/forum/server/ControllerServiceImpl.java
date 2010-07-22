@@ -1,10 +1,6 @@
 package forum.server;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
@@ -13,13 +9,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import forum.client.ControllerService;
 import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.MainForumLogic;
-import forum.server.domainlayer.interfaces.UIUser;
-import forum.server.updatedpersistentlayer.DatabaseUpdateException;
-import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectAlreadyExistsException;
-import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
-import forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException;
-import forum.server.updatedpersistentlayer.pipe.user.exceptions.MemberAlreadyExistsException;
-import forum.server.updatedpersistentlayer.pipe.user.exceptions.NotConnectedException;
+import forum.shared.ActiveConnectedData;
 import forum.shared.ConnectedUserData;
 import forum.shared.MessageModel;
 import forum.shared.SubjectModel;
@@ -28,7 +18,6 @@ import forum.shared.exceptions.database.DatabaseRetrievalException;
 import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.exceptions.user.NotRegisteredException;
 import forum.shared.exceptions.user.WrongPasswordException;
-import forum.shared.ActiveConnectedData;
 import forum.shared.tcpcommunicationlayer.RegisterMessage;
 import forum.shared.tcpcommunicationlayer.ServerResponse;
 
@@ -36,8 +25,6 @@ import forum.shared.tcpcommunicationlayer.ServerResponse;
 public class ControllerServiceImpl extends RemoteServiceServlet implements
 ControllerService {
 
-	private Collection<Long> connectedGuests;
-	private Map<Long, String> connectedMembers;
 
 	private ForumFacade facade;
 	private MessagesController messagesController;
@@ -46,10 +33,7 @@ ControllerService {
 
 	@Override
 	public void destroy() {
-		for (long guestID : this.connectedGuests)
-			this.disconnectClient(guestID);
-		for (long userID : connectedMembers.keySet())
-			this.disconnectClient(userID);
+		usersController.destroy();
 		super.destroy();
 	}
 
@@ -57,11 +41,8 @@ ControllerService {
 		try {
 			if (facade == null)
 				facade = MainForumLogic.getInstance();
-			connectedGuests = new HashSet<Long>();
-			connectedMembers = new HashMap<Long, String>();
 			this.messagesController = new MessagesController(facade);
 			this.usersController = new UsersController(facade);
-
 		} 
 		catch (Exception e) {
 			e.printStackTrace();
@@ -202,10 +183,10 @@ ControllerService {
 			forum.shared.exceptions.database.DatabaseUpdateException {
 		return messagesController.addNewThread(userID, subjectID, topic, title, content);
 	}
-	
+
 	public ActiveConnectedData getActiveUsersNumber() throws DatabaseRetrievalException {
 		try {
-		return new ActiveConnectedData(facade.getActiveGuestsNumber(), facade.getActiveMemberUserNames());
+			return new ActiveConnectedData(facade.getActiveGuestsNumber(), facade.getActiveMemberUserNames());
 		}
 		catch (forum.server.updatedpersistentlayer.DatabaseRetrievalException e) {
 			throw new DatabaseRetrievalException();
@@ -269,54 +250,21 @@ ControllerService {
 	 * 		The id of the client which should be disconnected from the server
 	 */
 	public void disconnectClient(long clientID) {
-		if (clientID < 0) {
-			this.connectedGuests.remove(clientID);
-			this.facade.removeGuest(clientID);
-		}
-		else {
-			String tUsername = this.connectedMembers.get(clientID);
-			if (tUsername != null)
-				try {
-					this.facade.logout(tUsername);
-				}
-			catch (NotConnectedException e) {}
-		}
+		this.usersController.disconnectClient(clientID);
 	}
 
+	public ConnectedUserData logout(String username) throws 
+	forum.shared.exceptions.user.NotConnectedException,
+	forum.shared.exceptions.database.DatabaseUpdateException {
+		return usersController.logout(username);
+	}
 
 	public ServerResponse addNewGuest() throws forum.shared.exceptions.database.DatabaseUpdateException {
-		try {
-			ServerResponse returnObj = new ServerResponse("", true); 
-			UIUser tNewGuest = facade.addGuest();
-			returnObj.setGuestIDChanged();
-			returnObj.setConnectedGuestID(tNewGuest.getID());
-			connectedGuests.add(tNewGuest.getID());
-			returnObj.setHasExecuted(true);
-			returnObj.setResponse(tNewGuest.getID() + "");
-			return returnObj;
-		}
-		catch (DatabaseUpdateException e) {
-			throw new forum.shared.exceptions.database.DatabaseUpdateException();
-		}
+		return usersController.addNewGuest();
 	}
 
 	public ServerResponse registerToForum(RegisterMessage data) {
-		ServerResponse returnObj = new ServerResponse("", true); 
-		try {
-			facade.registerNewMember(data.getUsername(), data.getPassword(), 
-					data.getLastName(), data.getFirstName(), data.getEmail());
-			returnObj.setHasExecuted(true);
-			returnObj.setResponse("registersuccess\t" + "you successfuly registered the forum");
-		}
-		catch (MemberAlreadyExistsException e) {
-			returnObj.setHasExecuted(false);
-			returnObj.setResponse("registererror\t" + "The following data already exists: " + e.getMessage());
-		} 
-		catch (DatabaseUpdateException e) {
-			returnObj.setHasExecuted(false);
-			returnObj.setResponse("registererror\t" + e.getMessage());
-		}
-		return returnObj;
+		return usersController.registerToForum(data);
 	}
 
 	@Override
@@ -352,4 +300,10 @@ ControllerService {
 	throws MessageNotFoundException, DatabaseRetrievalException {
 		return messagesController.getReplies(threadID, loadConfig, shouldUpdateViews);
 	}
+
+	@Override // TODO: /////////////////
+	public List<Object> searchByAuthor(String username) {
+		return null;
+	}
+
 }

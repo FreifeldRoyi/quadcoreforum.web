@@ -18,6 +18,7 @@ import com.extjs.gxt.ui.client.event.SelectionChangedListener;
 import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
+import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnData;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
@@ -28,16 +29,20 @@ import com.extjs.gxt.ui.client.widget.grid.RowNumberer;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.layout.FlowLayout;
 import com.extjs.gxt.ui.client.widget.toolbar.PagingToolBar;
+import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import forum.shared.ThreadModel;
+import forum.shared.ConnectedUserData.UserType;
 
 public class AsyncThreadsTableGrid extends LayoutContainer {  
 
 	private final ControllerServiceAsync service = (ControllerServiceAsync) Registry.get("Servlet");
 
-	private PagingToolBar toolBar;
+	private PagingToolBar statusBar;
+
+	private ToolBar toolbar;
 
 	private long subjectID;
 
@@ -46,9 +51,15 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	private ListStore<ThreadModel> store;
 
 	private Grid<ThreadModel> grid;
-	private ContentPanel cp;
+	private ContentPanel threadsPanel;
 
 	private AsyncMessagesTreeGrid messagesTree;
+
+	private Button openNewThreadButton;
+
+	private Button deleteThreadButton;
+
+	private Button modifyThreadButton;
 
 	/*	@Override
 	public void setTitle(String title) {
@@ -76,7 +87,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				if (subjectID == -1) {
 					System.out.println("suuuuuuuuuuuuuuuuuuuuuuuuu " + subjectID);
 					grid.el().unmask();
-					toolBar.setEnabled(false);
+					statusBar.setEnabled(false);
 					return;
 				}
 				service.getThreads((PagingLoadConfig) loadConfig, subjectID, new AsyncCallback<PagingLoadResult<ThreadModel>>() {
@@ -85,7 +96,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 					public void onFailure(Throwable caught) {
 						callback.onFailure(caught);
 						grid.el().unmask();
-						toolBar.setEnabled(true);
+						statusBar.setEnabled(true);
 					}
 
 					@Override
@@ -96,11 +107,15 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 						System.out.println(result.getTotalLength());
 						callback.onSuccess(result);
 
-						if (result.getTotalLength() == 0)
-							toolBar.setEnabled(false);
+						if (result.getTotalLength() == 0) {
+							statusBar.setEnabled(false);
+							messagesTree.setGuestView();
+							setButtonsEnableStatus(false);
+						}
 						else {
-							toolBar.setEnabled(true);
+							statusBar.setEnabled(true);
 							// select the first row
+							store.commitChanges();
 							grid.getSelectionModel().select(0, false);
 						}
 						/*							if (shouldRefresh) {
@@ -113,6 +128,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 			}  
 		};  
 	}
+
 
 	private void initializeLoader() {
 		this.loader = new BasePagingLoader<PagingLoadResult<ThreadModel>>(proxy); 
@@ -132,10 +148,35 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 
 	private void initializeToolbar() {
-		toolBar  = new PagingToolBar(10);  
-		toolBar.bind(loader);  
-		toolBar.setReuseConfig(false);
-		toolBar.setEnabled(false);
+		toolbar = new ToolBar();  
+		toolbar.setVisible(QuadCoreForumWeb.CONNECTED_USER_DATA != null && 
+				QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST);
+		toolbar.setBorders(true); 
+		openNewThreadButton = new Button("Open new"); 
+		openNewThreadButton.setWidth(115);
+		deleteThreadButton = new Button("Delete"); 
+		deleteThreadButton.setWidth(115);
+
+		modifyThreadButton = new Button("Modify");
+		modifyThreadButton.setWidth(115);
+
+		toolbar.add(openNewThreadButton);
+		toolbar.add(modifyThreadButton);
+		toolbar.add(deleteThreadButton);
+
+		toolbar.setAlignment(HorizontalAlignment.CENTER);
+
+		threadsPanel.setTopComponent(toolbar);  
+		setButtonsEnableStatus(false);
+	}
+
+
+
+	private void initializeStatusbar() {
+		statusBar  = new PagingToolBar(10);
+		statusBar.bind(loader);  
+		statusBar.setReuseConfig(false);
+		statusBar.setEnabled(false);
 	}
 
 	@Override  
@@ -149,14 +190,34 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		// loader  
 		initializeLoader();
 
-
 		this.initializeStore();
 
-		this.initializeToolbar();
+		this.initializeStatusbar();
 
 		this.initializeGrid();
 
+		this.initializeToolbar();
+
+
+		threadsPanel.layout();
 	}  
+
+	public void setToolBarVisible(boolean value) {
+		if (this.toolbar != null && this.toolbar.isVisible())
+			this.toolbar.setVisible(value);
+		this.threadsPanel.layout();
+		this.threadsPanel.repaint();
+	}
+
+	public void setButtonsEnableStatus(boolean value) {
+		System.out.println("TTTTTTTTTTTTTTTTTTTTTTJJJJJJJJJJJJJJJJJJJJJJJJJJ");
+		if (openNewThreadButton != null)
+			this.openNewThreadButton.setEnabled(true);
+		if (modifyThreadButton != null)
+			this.modifyThreadButton.setEnabled(value);
+		if (deleteThreadButton != null)
+			this.deleteThreadButton.setEnabled(value);
+	}
 
 
 	private void initializeGrid() {
@@ -238,13 +299,13 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 		ColumnModel cm = new ColumnModel(configs);  
 
-		cp = new ContentPanel();  
+		threadsPanel = new ContentPanel();  
 
-		cp.setFrame(false);  
-		cp.setHeaderVisible(false);
-		cp.setButtonAlign(HorizontalAlignment.CENTER);  
-		cp.setLayout(new FitLayout());  
-		cp.setBottomComponent(toolBar);  
+		threadsPanel.setFrame(false);  
+		threadsPanel.setHeaderVisible(false);
+		threadsPanel.setButtonAlign(HorizontalAlignment.CENTER);  
+		threadsPanel.setLayout(new FitLayout());  
+		threadsPanel.setBottomComponent(statusBar);  
 
 		grid = new Grid<ThreadModel>(store, cm);  
 
@@ -265,30 +326,48 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				invokeListenerOperation();
 			}
 		};
-		
+
 		grid.addListener(Events.RowClick, tRowSelectionListener);
 
-		
-		
+
 		grid.getSelectionModel().addSelectionChangedListener(new SelectionChangedListener<ThreadModel>() {
-			
+
 			@Override
 			public void selectionChanged(SelectionChangedEvent<ThreadModel> se) {
 				// TODO Auto-generated method stub
 				invokeListenerOperation();
 			}
 		});
-			
 
 
-		cp.add(grid);  
 
-		cp.layout();
-		add(cp);  
+		threadsPanel.add(grid);  
+		add(threadsPanel);  
+
+
+
+
+
 		this.setLayout(new FitLayout());
 
 	}
 
+	public void deleteSelectedThreadRow() {
+		ThreadModel toDelete = null;
+		if ((this.grid == null) || (this.grid.getSelectionModel() == null) ||
+				((toDelete = this.grid.getSelectionModel().getSelectedItem()) == null))
+			return;
+		if (this.store.getCount() > 0) { 
+			if (this.store.getAt(0) == toDelete) // the first thread
+				this.grid.getSelectionModel().selectNext(false);
+			else
+				this.grid.getSelectionModel().selectPrevious(false);
+		}
+		
+		this.store.remove(toDelete);
+		this.store.commitChanges();
+	}
+	
 
 	private String getRowStyle(String style, String color) {
 		int index = style.indexOf("background-color"); 
@@ -304,16 +383,26 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	private String getColoredRowStyle(String style) {
 		return this.getRowStyle(style, "background-color:#F5F9EE;");
 	}
-	
+
 	private void invokeListenerOperation() {
+		System.out.println("sssssssssssssssssssssssssss ");
+		if (grid.getSelectionModel() != null && grid.getSelectionModel().getSelectedItem() != null) {
+			setButtonsEnableStatus(true);
+		}
+		else
+			setButtonsEnableStatus(false);
 		if (messagesTree != null) {
-			System.out.println("row click event .................................. "  +
-					grid.getSelectionModel().getSelectedItem().getId());
-			messagesTree.changeThreadID(grid.getSelectionModel().getSelectedItem().getId());
-		
-		
-	}
+			//		System.out.println("row click event .................................. "  +
+			//				grid.getSelectionModel().getSelectedItem().getId());
+
+			
+
+			if (grid != null && grid.getSelectionModel() != null && grid.getSelectionModel().getSelectedItem() != null)
+				messagesTree.changeThreadID(grid.getSelectionModel().getSelectedItem().getId());
+
+
+		}
 	}
 
-	
+
 }

@@ -16,13 +16,7 @@ import com.extjs.gxt.ui.client.widget.button.ToggleButton;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
-import com.extjs.gxt.ui.client.widget.layout.VBoxLayout;
-import com.extjs.gxt.ui.client.widget.layout.VBoxLayoutData;
-import com.extjs.gxt.ui.client.widget.layout.VBoxLayout.VBoxLayoutAlign;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import forum.shared.ConnectedUserData.UserType;
 
@@ -33,8 +27,9 @@ public class MainPanel extends LayoutContainer
 	private final ContentPanel settingsPanel = new ContentPanel();  
 	private final ContentPanel navigatorPanel = new ContentPanel();  
 
+	
+	private final ContentPanel mainPanel = new ContentPanel();
 	private final TabPanel mainContentPanel = new TabPanel();
-
 
 	private final BorderLayout rootPanelLayout = new BorderLayout();
 	private final BorderLayoutData westData = new BorderLayoutData(LayoutRegion.WEST, 300, 100, Short.MAX_VALUE);
@@ -45,38 +40,45 @@ public class MainPanel extends LayoutContainer
 		super.onRender(target, index);
 
 		
+
 		setLayout(rootPanelLayout); 
 		setStyleAttribute("padding", "10px");  
 
 		this.mainContentPanelInit();
 		this.miscellaneousPanelInit();
-
+		
 		
 		
 		this.layout();
 
-		Window.addWindowClosingHandler(new Window.ClosingHandler() {
-			@Override
-			public void onWindowClosing(ClosingEvent event) {
-				if (QuadCoreForumWeb.CONNECTED_USER_DATA != null)
-					service.disconnectClient(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(), new AsyncCallback<Void>() {
-						public void onSuccess(Void result) {}
-						public void onFailure(Throwable caught) {}
-					});
-			}
-		});
-
 	} 
 
+
 	private void mainContentPanelInit() {
-//		this.mainContentPanel.setHeading("Main Content");
+		
+		AddReplyForm tAddReplyForm = new AddReplyForm();
+		tAddReplyForm.setVisible(true);
+		
+		
+		Registry.register("MainViewPanel", mainPanel);
+		Registry.register("maincontentpanel", mainContentPanel);
+		Registry.register("AddReply", tAddReplyForm);
+		
+		
+		mainPanel.setLayout(new FitLayout());
+				
+		mainPanel.setCollapsible(false);
+		mainPanel.setHeaderVisible(false);
+		mainPanel.add(mainContentPanel);
+		mainPanel.setBorders(false);
+		
 		this.mainContentPanel.setBorders(true);
 		this.mainContentPanel.setMinTabWidth(115);  
 		this.mainContentPanel.setResizeTabs(true);  
 		this.mainContentPanel.setAnimScroll(true);  
 		this.mainContentPanel.setTabScroll(true);  
 		this.mainContentPanel.setCloseContextMenu(true);
-		
+
 		//Main Content Panel
 		BorderLayoutData centerData = new BorderLayoutData(LayoutRegion.CENTER, 0, 0, Short.MAX_VALUE);
 		centerData.setSplit(true);
@@ -86,15 +88,13 @@ public class MainPanel extends LayoutContainer
 
 
 
-//		this.mainContentPanel.setLayout(new FitLayout());
+		//		this.mainContentPanel.setLayout(new FitLayout());
 
 		this.initializeThreadsPanel();
 
-//		this.mainContentPanel.add(threadsPanel);
+		//		this.mainContentPanel.add(threadsPanel);
 
-		add(this.mainContentPanel, centerData);
-		
-		Registry.register("maincontentpanel", mainContentPanel);
+		add(this.mainPanel, centerData);
 
 	}
 
@@ -109,7 +109,7 @@ public class MainPanel extends LayoutContainer
 
 	private void miscellaneousPanelInit() {
 
-		
+
 		this.miscellaneousPanel.setHeading("QuadCoreForum");
 		this.miscellaneousPanel.setBorders(true);
 		westData.setSplit(false);
@@ -131,7 +131,7 @@ public class MainPanel extends LayoutContainer
 		settingsPanel.setSize(300, 200);
 		settingsPanel.setBodyStyle("fontSize: 12px; padding: 0px");  
 		this.loadSettingsLinks();
-		
+
 		BorderLayoutData tNorthData= new BorderLayoutData(LayoutRegion.NORTH, 200, 200, Short.MAX_VALUE);
 
 		settingsPanel.setCollapsible(true);
@@ -139,7 +139,7 @@ public class MainPanel extends LayoutContainer
 		tNorthData.setCollapsible(true);
 		tNorthData.setFloatable(true);
 		this.miscellaneousPanel.add(this.settingsPanel, tNorthData);
-		
+
 		com.extjs.gxt.ui.client.widget.button.Button b = new Button();
 		b.setShim(true);
 		this.settingsPanel.add(b);
@@ -160,19 +160,27 @@ public class MainPanel extends LayoutContainer
 
 		BorderLayoutData tCenterData = new BorderLayoutData(LayoutRegion.CENTER, 0, 0, Short.MAX_VALUE);
 
-		tCenterData.setMargins(new Margins(10, 0, 0, 0));
+		tCenterData.setMargins(new Margins(5, 0, 0, 0));
 		this.miscellaneousPanel.add(navigatorPanel, tCenterData);
 	}
 
-	public void setConnectedUserName() {
+	public void changeLoginView() {
 		if (QuadCoreForumWeb.CONNECTED_USER_DATA.getType() == UserType.GUEST) {
-		this.miscellaneousPanel.setHeading("Hello Guest!");
-		this.settingsPanel.collapse();
+			this.miscellaneousPanel.setHeading("Hello Guest!");
+			this.settingsPanel.collapse();
 		}
 		else {
 			this.miscellaneousPanel.setHeading("Hello " + QuadCoreForumWeb.CONNECTED_USER_DATA.getLastName() +
 					" " + QuadCoreForumWeb.CONNECTED_USER_DATA.getFirstName() + "!");
 			this.settingsPanel.expand();
+		}
+		this.changeToolBarsVisible();
+	}
+
+	public void changeToolBarsVisible() {
+		for (TabItem tItem : this.mainContentPanel.getItems()) {
+			SubjectTabItem tSubjectTab = (SubjectTabItem)tItem;
+			tSubjectTab.changeToolBarVisible();
 		}
 	}
 
@@ -182,7 +190,6 @@ public class MainPanel extends LayoutContainer
 
 			@Override
 			public void handleEvent(ButtonEvent be) {
-
 				System.out.println("ddddddddddddddddddddd");
 				System.out.println("eeeeeeeeeeeeeeeeeeeee");
 
@@ -200,6 +207,7 @@ public class MainPanel extends LayoutContainer
 
 			@Override
 			public void handleEvent(ButtonEvent be) {
+				
 				/*
 				service.getSubjects(-1, 
 						new AsyncCallback<ServerResponse>() {
@@ -240,14 +248,14 @@ public class MainPanel extends LayoutContainer
 				}));
 		 */	
 	}
-/*
+	/*
 	private void addToMainContent(LayoutContainer c)
 	{
 		this.mainContentPanel.removeAll();
 		this.mainContentPanel.add(c);
 		this.mainContentPanel.layout();
 	}
-*/
+	 */
 	private ToggleButton createButton(String text, Listener<ButtonEvent> l)
 	{
 		ToggleButton btn = new ToggleButton(text);
