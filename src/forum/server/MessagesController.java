@@ -103,12 +103,12 @@ public class MessagesController {
 		}
 	}
 
-	public void modifyMessage(final long authorID, long messageID, String newTitle,
+	public MessageModel modifyMessage(final long authorID, long messageID, String newTitle,
 			String newContent) throws MessageNotFoundException, NotRegisteredException,
 			forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException {
 		try {
-			facade.updateAMessage(authorID, messageID, newTitle, newContent);
+			return messageToMessageModelConvertor(facade.updateAMessage(authorID, messageID, newTitle, newContent));
 		}
 		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e) {
 			throw new MessageNotFoundException(e.getID());
@@ -125,13 +125,13 @@ public class MessagesController {
 		}
 	}
 
-	public void modifyThread(final long authorID, long threadID, 
+	public ThreadModel modifyThread(final long authorID, long threadID, 
 			String newTopic) throws NotRegisteredException, 
 			forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException,
 			forum.shared.exceptions.message.ThreadNotFoundException {
 		try {
-			facade.updateAThread(authorID, threadID, newTopic);
+			return threadToThreadModelConvertor(facade.updateAThread(authorID, threadID, newTopic));
 		}
 		catch (ThreadNotFoundException e) {
 			throw new forum.shared.exceptions.message.ThreadNotFoundException(e.getThreadID());
@@ -148,7 +148,7 @@ public class MessagesController {
 		}		
 	}
 
-	public void modifySubject(final long authorID, long subjectID, 
+	public SubjectModel modifySubject(final long authorID, long subjectID, 
 			String newName, String newDescription) throws 
 			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException,
 			forum.shared.exceptions.database.DatabaseUpdateException, 
@@ -156,7 +156,7 @@ public class MessagesController {
 			forum.shared.exceptions.message.SubjectNotFoundException {
 		
 		try {
-			facade.updateASubject(authorID, subjectID, newName, newDescription);
+			return subjectToSubjectModelConvertor(facade.updateASubject(authorID, subjectID, newName, newDescription));
 		}
 		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException e) {
 			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());

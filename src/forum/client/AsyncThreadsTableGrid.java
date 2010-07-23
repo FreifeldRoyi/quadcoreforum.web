@@ -11,20 +11,30 @@ import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.extjs.gxt.ui.client.data.PagingLoader;
 import com.extjs.gxt.ui.client.data.RpcProxy;
 import com.extjs.gxt.ui.client.event.BaseEvent;
+import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.Listener;
+import com.extjs.gxt.ui.client.event.MessageBoxEvent;
+import com.extjs.gxt.ui.client.event.RowEditorEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedListener;
+import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
+import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
+import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.button.Button;
+import com.extjs.gxt.ui.client.widget.button.ToggleButton;
+import com.extjs.gxt.ui.client.widget.form.TextField;
+import com.extjs.gxt.ui.client.widget.grid.CellEditor;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnData;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 import com.extjs.gxt.ui.client.widget.grid.Grid;
 import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
 import com.extjs.gxt.ui.client.widget.grid.GridView;
+import com.extjs.gxt.ui.client.widget.grid.RowEditor;
 import com.extjs.gxt.ui.client.widget.grid.RowNumberer;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.layout.FlowLayout;
@@ -33,8 +43,13 @@ import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.ConnectedUserData.UserType;
+import forum.shared.exceptions.database.DatabaseUpdateException;
+import forum.shared.exceptions.message.MessageNotFoundException;
+import forum.shared.exceptions.user.NotPermittedException;
+import forum.shared.exceptions.user.NotRegisteredException;
 
 public class AsyncThreadsTableGrid extends LayoutContainer {  
 
@@ -44,7 +59,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 	private ToolBar toolbar;
 
-	private long subjectID;
+	private SubjectModel subjectID;
 
 	private RpcProxy<PagingLoadResult<ThreadModel>> proxy;
 	private PagingLoader<PagingLoadResult<ThreadModel>> loader;
@@ -59,7 +74,14 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 	private Button deleteThreadButton;
 
-	private Button modifyThreadButton;
+	private ToggleButton modifyThreadButton;
+
+	private TextField<String> topicEditorField;
+
+	private ColumnConfig topicColumn;
+
+	private RowEditor<ThreadModel> threadRowEditor;
+
 
 	/*	@Override
 	public void setTitle(String title) {
@@ -68,9 +90,12 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	}
 	 */
 
-	public AsyncThreadsTableGrid(long subjectID) {
+	public AsyncThreadsTableGrid(SubjectModel subject) {
 		System.out.println("initializing " + subjectID);
-		this.subjectID = subjectID;
+		this.subjectID = subject;
+		topicColumn = new ColumnConfig("topic", "Topic", 800);
+		threadRowEditor = new RowEditor<ThreadModel>();  
+		threadRowEditor.setEnabled(false);
 	}
 
 	public void setMessagesTree(AsyncMessagesTreeGrid messagesTree) {
@@ -84,13 +109,13 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 			@Override
 			protected void load(Object loadConfig,
 					final AsyncCallback<PagingLoadResult<ThreadModel>> callback) {
-				if (subjectID == -1) {
+				if (subjectID.getID() == -1) {
 					System.out.println("suuuuuuuuuuuuuuuuuuuuuuuuu " + subjectID);
 					grid.el().unmask();
 					statusBar.setEnabled(false);
 					return;
 				}
-				service.getThreads((PagingLoadConfig) loadConfig, subjectID, new AsyncCallback<PagingLoadResult<ThreadModel>>() {
+				service.getThreads((PagingLoadConfig) loadConfig, subjectID.getID(), new AsyncCallback<PagingLoadResult<ThreadModel>>() {
 
 					@Override
 					public void onFailure(Throwable caught) {
@@ -157,7 +182,58 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		deleteThreadButton = new Button("Delete"); 
 		deleteThreadButton.setWidth(115);
 
-		modifyThreadButton = new Button("Modify");
+		deleteThreadButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				final ThreadModel tSelecteModel;
+				if ((grid == null) || (grid.getSelectionModel() == null) ||
+						((tSelecteModel = grid.getSelectionModel().getSelectedItem()) == null)) {
+					deleteThreadButton.setEnabled(false);
+					return;
+				}
+
+				final Listener<MessageBoxEvent> tDeleteListener = new Listener<MessageBoxEvent>() {  
+					public void handleEvent(MessageBoxEvent ce) {  
+						Button btn = ce.getButtonClicked();
+						if (btn.getText().equals("No"))
+							return;
+						QuadCoreForumWeb.WORKING_STATUS.setBusy("Deleting thread...");
+						QuadCoreForumWeb.SERVICE.deleteMessage(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
+								-1, tSelecteModel.getID(), new AsyncCallback<Void>() {
+
+							@Override
+							public void onFailure(Throwable caught) {
+								QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+								if (caught instanceof MessageNotFoundException)
+									loader.load(null);
+								else if (caught instanceof NotRegisteredException) {
+									//
+								}
+								else if (caught instanceof NotPermittedException) {
+
+								}
+								else if (caught instanceof DatabaseUpdateException) {
+
+								}
+							}
+
+							@Override
+							public void onSuccess(Void result) {
+								QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+								deleteSelectedThreadRow();
+								Info.display("Thread deletion success", "The thread was deleted successfully " +
+								"from the forum");
+							}
+						});
+					}  
+				};  
+
+				MessageBox.confirm("Confirm", "Are you sure you want to delete the thread?", tDeleteListener);  
+			}
+		});
+
+
+		modifyThreadButton = new ToggleButton("Modify");
 		modifyThreadButton.setWidth(115);
 
 		toolbar.add(openNewThreadButton);
@@ -198,23 +274,87 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 		this.initializeToolbar();
 
+		threadRowEditor.addListener(Events.AfterEdit, new Listener<RowEditorEvent>() {
+			@Override
+			public void handleEvent(final RowEditorEvent be) {
+				be.setCancelled(true);
+				ThreadModel tSelectedModel = grid.getSelectionModel().getSelectedItem();
+				QuadCoreForumWeb.SERVICE.modifyThread(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
+						tSelectedModel.getID(), topicEditorField.getValue(),
+						new AsyncCallback<ThreadModel>() {
+
+					@Override
+					public void onFailure(Throwable caught) {
+						Info.display("Modification error", "Can't modify thread");
+						threadRowEditor.stopEditing(false);
+					}
+
+					@Override
+					public void onSuccess(ThreadModel result) {
+						Info.display("Modification success", "The thread was modified successfully");
+						threadRowEditor.stopEditing(true);
+					}
+				});
+			}
+		});
+
+		
+		
+		
+		grid.addPlugin(threadRowEditor);  
+
+		
+		openNewThreadButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
+
+				tMainViewPanel.removeAll();
+				AddReplyModifyForm tAddReply = (AddReplyModifyForm)Registry.get("AddReply");
+				tAddReply.initThreadsOpenningDialog(AsyncThreadsTableGrid.this.subjectID, grid, 
+						store);
+				tMainViewPanel.add(tAddReply);
+				tMainViewPanel.layout();
+			}
+		});
+
+		modifyThreadButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+
+			@Override  
+			public void componentSelected(ButtonEvent ce) {
+				if (modifyThreadButton.isPressed()) {
+					threadRowEditor.setEnabled(true);
+					threadRowEditor.stopEditing(false);
+					threadRowEditor.startEditing(store.indexOf(grid.getSelectionModel().getSelectedItem()), true);
+				}
+				else {
+					threadRowEditor.stopEditing(false);
+					threadRowEditor.setEnabled(false);
+				}
+			}
+		}); 
+
+
+
 
 		threadsPanel.layout();
 	}  
 
 	public void setToolBarVisible(boolean value) {
-		if (this.toolbar != null && this.toolbar.isVisible())
+		if (this.toolbar != null)
 			this.toolbar.setVisible(value);
 		this.threadsPanel.layout();
 		this.threadsPanel.repaint();
 	}
 
 	public void setButtonsEnableStatus(boolean value) {
-		System.out.println("TTTTTTTTTTTTTTTTTTTTTTJJJJJJJJJJJJJJJJJJJJJJJJJJ");
+		System.out.println("TTTTTTTTTTTTTTTTTTTTTTJJJJJJJJJJJJJJJJJJJJJJJJJJ " + value );
 		if (openNewThreadButton != null)
-			this.openNewThreadButton.setEnabled(true);
+			this.openNewThreadButton.setEnabled(subjectID.getID() != -1);
 		if (modifyThreadButton != null)
-			this.modifyThreadButton.setEnabled(value);
+			this.modifyThreadButton.setEnabled(value);		
+
 		if (deleteThreadButton != null)
 			this.deleteThreadButton.setEnabled(value);
 	}
@@ -229,8 +369,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		rn.setWidth(30);
 		configs.add(rn);
 
-		ColumnConfig column = new ColumnConfig("topic", "Topic", 800);
-		column.setRenderer(new GridCellRenderer<ThreadModel>() {
+		topicColumn.setRenderer(new GridCellRenderer<ThreadModel>() {
 
 			@Override
 			public Object render(ThreadModel model, String property,
@@ -249,10 +388,14 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		});
 
 
-		column.setAlignment(HorizontalAlignment.LEFT);  
-		configs.add(column);  
+		topicEditorField = new TextField<String>();  
+		topicEditorField.setAllowBlank(false);
+		topicColumn.setEditor(new CellEditor(topicEditorField));  
 
-		column = new ColumnConfig("responses", "Responses#", 100);  
+		topicColumn.setAlignment(HorizontalAlignment.LEFT);  
+		configs.add(topicColumn);  
+
+		ColumnConfig column = new ColumnConfig("responses", "Responses#", 100);  
 		column.setAlignment(HorizontalAlignment.CENTER);  
 
 		column.setRenderer(new GridCellRenderer<ThreadModel>() {
@@ -317,6 +460,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		grid.setBorders(true);  
 		grid.setAutoExpandColumn("topic");  
 
+		grid.getView().setShowDirtyCells(false);
 
 		Listener<BaseEvent> tRowSelectionListener = new Listener<BaseEvent>() {
 			@Override
@@ -350,6 +494,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 		this.setLayout(new FitLayout());
 
+
 	}
 
 	public void deleteSelectedThreadRow() {
@@ -363,11 +508,11 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 			else
 				this.grid.getSelectionModel().selectPrevious(false);
 		}
-		
+
 		this.store.remove(toDelete);
 		this.store.commitChanges();
 	}
-	
+
 
 	private String getRowStyle(String style, String color) {
 		int index = style.indexOf("background-color"); 
@@ -395,10 +540,10 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 			//		System.out.println("row click event .................................. "  +
 			//				grid.getSelectionModel().getSelectedItem().getId());
 
-			
+
 
 			if (grid != null && grid.getSelectionModel() != null && grid.getSelectionModel().getSelectedItem() != null)
-				messagesTree.changeThreadID(grid.getSelectionModel().getSelectedItem().getId());
+				messagesTree.changeThreadID(grid.getSelectionModel().getSelectedItem().getID(), false);
 
 
 		}

@@ -25,7 +25,6 @@ import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.MessageBox;
-import com.extjs.gxt.ui.client.widget.TabPanel;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnData;
@@ -60,9 +59,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 	private ContentPanel messagesPanel;
 
 	private TreeGrid<MessageModel> tree;
-
 	private TreeLoader<MessageModel> loader;
-
 	private TreeStore<MessageModel> store;
 
 	private long threadID;
@@ -73,12 +70,16 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 	private ToolBar toolbar;
 
+	private boolean selectionChanged;
+	
 	public AsyncMessagesTreeGrid(AsyncThreadsTableGrid threadsTable) {
 		this.threadsTable = threadsTable;
 		this.threadID = -1;
 	}
 
-	public void changeThreadID(long threadID) {
+	
+	public void changeThreadID(long threadID, boolean selectionChanged) {
+		this.selectionChanged = selectionChanged;
 		System.out.println("Changing threadID");
 		this.threadID = threadID;
 		if (loader != null)
@@ -104,7 +105,6 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 	@Override  
 	protected void onRender(Element parent, int index) {  
 		super.onRender(parent, index);  
-
 
 		setLayout(new FitLayout());
 
@@ -147,7 +147,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				};
 
 				if (threadID != -1)
-					service.getReplies(threadID, (MessageModel) loadConfig, false, tNewCallback);
+					service.getReplies(threadID, (MessageModel) loadConfig, selectionChanged, tNewCallback);
 			} 
 		};  	
 
@@ -337,11 +337,16 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				 */
 
 				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
+
 				if (tSelected != null) {
+					/*
+
 					com.google.gwt.dom.client.Element tRow = tree.getTreeView().getRow(tSelected);
 					if (tRow != null)
 						expander.expandRow(tree.getView().findRowIndex(tRow));
+						*/
 					allowReplyModifyDeleteButtons(tSelected);
+					
 				}
 			}
 		});
@@ -397,6 +402,8 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 		replyButton = new Button("Reply");
 		replyButton.setWidth(115);
 		deleteButton = new Button("Delete");
+		modifyButton = new Button("Modify");
+		modifyButton.setWidth(115);
 
 
 		replyButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
@@ -405,14 +412,31 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
 
 				tMainViewPanel.removeAll();
-				AddReplyForm tAddReply = (AddReplyForm)Registry.get("AddReply");
-				tAddReply.setMessage(tree.getSelectionModel().getSelectedItem());
+				AddReplyModifyForm tAddReply = (AddReplyModifyForm)Registry.get("AddReply");
+				tAddReply.initReplyDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
 				tMainViewPanel.add(tAddReply);
 				tMainViewPanel.layout();
 			}
 		});
 
 
+
+		modifyButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
+
+				tMainViewPanel.removeAll();
+				AddReplyModifyForm tModifyForm = (AddReplyModifyForm)Registry.get("AddReply");
+				tModifyForm.initModifyDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
+				tMainViewPanel.add(tModifyForm);
+				tMainViewPanel.layout();
+			}
+		});
+
+		
+		
+		
 
 		deleteButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 			@Override
@@ -483,8 +507,6 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 		deleteButton.setWidth(115);
 
-		modifyButton = new Button("Modify");
-		modifyButton.setWidth(115);
 
 		this.setGuestView();
 		toolbar.add(replyButton);

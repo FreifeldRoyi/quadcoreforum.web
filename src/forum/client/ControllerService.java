@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
@@ -96,17 +95,17 @@ public interface ControllerService extends RemoteService {
 	 * @throws NotRegisteredException 
 	 * @throws MessageNotFoundException 
 	 */
-	public void modifyMessage(final long authorID, long messageID, String newTitle,
+	public MessageModel modifyMessage(final long authorID, long messageID, String newTitle,
 			String newContent) throws MessageNotFoundException,
 			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException;
 
-	public void modifyThread(final long authorID, long threadID, 
+	public ThreadModel modifyThread(final long authorID, long threadID, 
 			String newTopic) throws ThreadNotFoundException, NotRegisteredException,
 			forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException;
 
-	public void modifySubject(final long authorID, long subjectID, 
+	public SubjectModel modifySubject(final long authorID, long subjectID, 
 			String newName, String newDescription) throws SubjectNotFoundException,
 			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException, 
@@ -160,6 +159,13 @@ public interface ControllerService extends RemoteService {
 			forum.shared.exceptions.message.SubjectNotFoundException;
 	
 	public ActiveConnectedData getActiveUsersNumber() throws DatabaseRetrievalException;
+
+	
+	
+	
+	
+	
+	
 	
 	/*		public abstract void searchByAuthor(Component comp, String username);
 

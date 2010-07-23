@@ -4,9 +4,13 @@ import java.util.Collection;
 import java.util.Vector;
 
 import com.extjs.gxt.ui.client.Registry;
+import com.extjs.gxt.ui.client.event.ButtonEvent;
+import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
+import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.Status;
 import com.extjs.gxt.ui.client.widget.Viewport;
+import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.layout.FitData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.toolbar.FillToolItem;
@@ -23,6 +27,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import forum.shared.ActiveConnectedData;
 import forum.shared.ConnectedUserData;
 import forum.shared.Permission;
+import forum.shared.ConnectedUserData.UserType;
 import forum.shared.exceptions.database.DatabaseUpdateException;
 import forum.shared.tcpcommunicationlayer.ServerResponse;
 
@@ -39,6 +44,9 @@ public class QuadCoreForumWeb implements EntryPoint {
 	private MainPanel mainPanel;
 
 	private ContentPanel mainContentPanel;
+
+	public static Button SHOW_CONNECTED = new Button("Show connected");
+
 	
 	public static ControllerServiceAsync SERVICE = GWT.create(ControllerService.class);
 	
@@ -124,6 +132,38 @@ public class QuadCoreForumWeb implements EntryPoint {
 		statusBar.add(WORKING_STATUS);  
 		statusBar.add(new FillToolItem());  
 
+		
+		statusBar.add(SHOW_CONNECTED);
+		
+		SHOW_CONNECTED.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(false);
+				
+				QuadCoreForumWeb.SERVICE.getActiveUsersNumber(new AsyncCallback<ActiveConnectedData>() {
+
+					@Override
+					public void onFailure(Throwable caught) {
+						if (QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST)
+							QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(true);
+					}
+
+					@Override
+					public void onSuccess(ActiveConnectedData result) {
+						if (QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST)
+							QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(true);
+						String message = "";
+						for (String tName : result.getActiveNames())
+							message += tName + "\n";
+						MessageBox.info("Connected users", message, null);
+					}
+				});
+			}
+		});
+		
+		
+		statusBar.add(new LabelToolItem(" "));
 		GUESTS_NUMBER_STATUS = new Status();  
 		GUESTS_NUMBER_STATUS.setStyleAttribute("font-weight", "bold");
 		GUESTS_NUMBER_STATUS.setWidth(120);  
@@ -147,7 +187,7 @@ public class QuadCoreForumWeb implements EntryPoint {
 			}
 		};
 		// every 4 seconds the numbers of users and guests will be updating
-		tTimer.scheduleRepeating(5000);
+		tTimer.scheduleRepeating(8000);
 		tTimer.run();
 
 		mainContentPanel.setBottomComponent(statusBar);
@@ -167,7 +207,7 @@ public class QuadCoreForumWeb implements EntryPoint {
 			public void onSuccess(ActiveConnectedData result) {
 				long tGuestsNumber = result.getGuestsNumber();
 				GUESTS_NUMBER_STATUS.setText(tGuestsNumber + ((tGuestsNumber == 1)? " Guest" : " Guests"));
-				Collection<String> activeUsernames = result.getActiveUsernames();
+				Collection<String> activeUsernames = result.getActiveNames();
 				MEMBERS_NUMBER_STATUS.setText(activeUsernames.size() +
 						((activeUsernames.size() == 1)? " Members" : " Members"));
 				WORKING_STATUS.clearStatus("Not working");

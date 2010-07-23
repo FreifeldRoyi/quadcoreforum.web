@@ -33,7 +33,7 @@ public class ThreadModel implements ModelData, Serializable {
 	/**
 	 * @return the id
 	 */
-	public long getId() {
+	public long getID() {
 		return this.get("id");
 	}
 	/**

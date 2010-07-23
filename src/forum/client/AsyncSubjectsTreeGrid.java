@@ -12,20 +12,32 @@ import com.extjs.gxt.ui.client.data.ModelStringProvider;
 import com.extjs.gxt.ui.client.data.RpcProxy;
 import com.extjs.gxt.ui.client.data.TreeLoader;
 import com.extjs.gxt.ui.client.event.BaseEvent;
+import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.Listener;
+import com.extjs.gxt.ui.client.event.MessageBoxEvent;
+import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.event.TreePanelEvent;
 import com.extjs.gxt.ui.client.store.TreeStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
+import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
+import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.TabItem;
 import com.extjs.gxt.ui.client.widget.TabPanel;
+import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
+import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.extjs.gxt.ui.client.widget.treepanel.TreePanel;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import forum.shared.SubjectModel;
+import forum.shared.exceptions.database.DatabaseUpdateException;
+import forum.shared.exceptions.message.MessageNotFoundException;
+import forum.shared.exceptions.message.SubjectNotFoundException;
+import forum.shared.exceptions.user.NotPermittedException;
+import forum.shared.exceptions.user.NotRegisteredException;
 
 public class AsyncSubjectsTreeGrid extends LayoutContainer {  
 
@@ -37,9 +49,27 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 	private TabPanel mainPanel;
 
+	private ToolBar subjectsPanelToolbar = new ToolBar();
 
+	ContentPanel subjectsContentPanel = new ContentPanel();  
+	Button addNewSubject = new Button("Add new");
+	Button modifySubject = new Button("Modify");
+
+	Button deleteSubject = new Button("Delete");
+
+	private TreeLoader<SubjectModel> loader;
+	
+	
+	
+	
+	
+	
+	public void setToolBarVisible(boolean value) {
+		this.subjectsPanelToolbar.setVisible(value);
+	}
+	
 	@Override  
-	protected void onRender(Element parent, int index) {  
+	protected void onRender(Element parent, int index) {
 		super.onRender(parent, index);  
 
 		mainPanel = Registry.get("maincontentpanel");
@@ -47,16 +77,131 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 		setLayout(new FitLayout());
 
 
-		ContentPanel cp = new ContentPanel();  
-		cp.setBodyBorder(false);
-		cp.setHeaderVisible(false);
-		cp.setButtonAlign(HorizontalAlignment.CENTER);  
+		subjectsContentPanel.setBodyBorder(false);
+		subjectsContentPanel.setHeaderVisible(false);
+		subjectsContentPanel.setButtonAlign(HorizontalAlignment.CENTER);  
 
 		//		cp.setHeight(600);
 
-		cp.setLayout(new FitLayout());
+		subjectsContentPanel.setLayout(new FitLayout());
 
-		cp.setFrame(true);  
+		subjectsPanelToolbar.add(addNewSubject);
+		subjectsPanelToolbar.add(modifySubject);
+		subjectsPanelToolbar.add(deleteSubject);
+
+		subjectsContentPanel.setTopComponent(subjectsPanelToolbar);
+		subjectsContentPanel.setLayout(new FitLayout());
+		
+		addNewSubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				if (tree == null || tree.getSelectionModel() == null)
+					return;
+				SubjectModel tSelected = tree.getSelectionModel().getSelectedItem();
+				if (tSelected == null) {
+					addNewSubject.setEnabled(false);
+					return;
+				}
+				else {
+					ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
+
+					tMainViewPanel.removeAll();
+					AddReplyModifyForm tAddSubjectForm = (AddReplyModifyForm)Registry.get("AddReply");
+					tAddSubjectForm.initAddSubjectDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
+					tMainViewPanel.add(tAddSubjectForm);
+					tMainViewPanel.layout();	
+				}
+				
+			}
+		});
+
+		
+		deleteSubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
+
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				final SubjectModel tSelected = tree.getSelectionModel().getSelectedItem();
+				if (tSelected == null) {
+					deleteSubject.setEnabled(false);
+					return;
+				}
+				else {	
+					final Listener<MessageBoxEvent> tDeleteListener = new Listener<MessageBoxEvent>() {  
+						public void handleEvent(MessageBoxEvent ce) {  
+							Button btn = ce.getButtonClicked();
+							if (btn.getText().equals("No"))
+								return;
+							deleteSubject.setEnabled(false);
+							QuadCoreForumWeb.WORKING_STATUS.setBusy("Deleting subject...");
+							QuadCoreForumWeb.SERVICE.deleteSubject(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
+									(store.getParent(tSelected) != null? store.getParent(tSelected).getID() : -1),
+									tSelected.getID() , new AsyncCallback<Void>() {
+
+								@Override
+								public void onFailure(Throwable caught) {
+									QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+									deleteSubject.setEnabled(true);
+									if (caught instanceof SubjectNotFoundException)
+										loader.load(null);
+									else if (caught instanceof NotRegisteredException) {
+										//
+									}
+									else if (caught instanceof NotPermittedException) {
+
+									}
+									else if (caught instanceof DatabaseUpdateException) {
+
+									}
+								}
+
+								@Override
+								public void onSuccess(Void result) {
+									deleteSubject.setEnabled(true);
+									QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+									SubjectModel tParentOfSelected = store.getParent(tSelected);
+									store.remove(tSelected);
+									store.commitChanges();
+									mainPanel.remove(mainPanel.getItemByItemId(tSelected.getID() + ""));
+									if (tParentOfSelected != null) {
+										tree.getSelectionModel().select(tParentOfSelected, false);
+										SubjectTabItem tTabItem =
+											(SubjectTabItem)mainPanel.getItemByItemId(tParentOfSelected.getID() + "");
+										if (tTabItem != null)
+											mainPanel.setSelection(tTabItem);
+									}
+									else {
+										mainPanel.removeAll();
+										mainPanel.add((TabItem) Registry.get("default"));
+									}
+										// 
+									Info.display("Thread deletion success", "The subject was deleted successfully " +
+									"from the forum");
+								}
+							});
+						}  
+					};  
+
+					MessageBox.confirm("Confirm", "Are you sure you want to delete the subject?", tDeleteListener);  
+
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+
+					
+				}
+			}
+				
+		});
+		
+		
+		subjectsContentPanel.setFrame(true);  
 
 		// data proxy  
 		RpcProxy<List<SubjectModel>> proxy = new RpcProxy<List<SubjectModel>>() {  
@@ -90,8 +235,7 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 		};  	
 
 
-		// tree loader  
-		final TreeLoader<SubjectModel> loader = new BaseTreeLoader<SubjectModel>(proxy) {  
+		loader = new BaseTreeLoader<SubjectModel>(proxy) {  
 			@Override  
 			public boolean hasChildren(SubjectModel parent) {
 				return true;
@@ -220,12 +364,6 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 
 
-
-
-
-
-
-
 		tree.setCaching(false);
 
 		tree.setBorders(true);  
@@ -236,11 +374,11 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 		tree.setTrackMouseOver(true);  
 
-		cp.setScrollMode(Scroll.AUTOY);
+		subjectsContentPanel.setScrollMode(Scroll.AUTOY);
 
 
-		cp.add(tree);
-		add(cp);  
+		subjectsContentPanel.add(tree);
+		add(subjectsContentPanel);  
 
 	}
 	

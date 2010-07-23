@@ -1,6 +1,9 @@
 package forum.server;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
 
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
@@ -9,6 +12,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import forum.client.ControllerService;
 import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.MainForumLogic;
+import forum.server.domainlayer.interfaces.UIMember;
 import forum.shared.ActiveConnectedData;
 import forum.shared.ConnectedUserData;
 import forum.shared.MessageModel;
@@ -101,29 +105,29 @@ ControllerService {
 	 * @throws NotRegisteredException 
 	 * @throws MessageNotFoundException 
 	 */
-	public void modifyMessage(final long authorID, long messageID, String newTitle,
+	public MessageModel modifyMessage(final long authorID, long messageID, String newTitle,
 			String newContent) throws MessageNotFoundException,
 			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException {
-		messagesController.modifyMessage(authorID, messageID, newTitle, newContent);
+		return messagesController.modifyMessage(authorID, messageID, newTitle, newContent);
 	}
 
-	public void modifyThread(final long authorID, long threadID, 
+	public ThreadModel modifyThread(final long authorID, long threadID, 
 			String newTopic) throws forum.shared.exceptions.message.ThreadNotFoundException,
 			NotRegisteredException,
 			forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException {
-		messagesController.modifyThread(authorID, threadID, newTopic);
+		return messagesController.modifyThread(authorID, threadID, newTopic);
 	}
 
-	public void modifySubject(final long authorID, long subjectID, 
+	public SubjectModel modifySubject(final long authorID, long subjectID, 
 			String newName, String newDescription) throws
 			NotRegisteredException,
 			forum.shared.exceptions.user.NotPermittedException, 
 			forum.shared.exceptions.database.DatabaseUpdateException,
 			forum.shared.exceptions.message.SubjectAlreadyExistsException,
 			forum.shared.exceptions.message.SubjectNotFoundException {
-		messagesController.modifySubject(authorID, subjectID, newName, newDescription);
+		return messagesController.modifySubject(authorID, subjectID, newName, newDescription);
 	}
 
 	/**
@@ -186,7 +190,21 @@ ControllerService {
 
 	public ActiveConnectedData getActiveUsersNumber() throws DatabaseRetrievalException {
 		try {
-			return new ActiveConnectedData(facade.getActiveGuestsNumber(), facade.getActiveMemberUserNames());
+			Collection<String> tActiveUsernames = facade.getActiveMemberUserNames();
+			Collection<String> tActiveNames = new ArrayList<String>();
+			long i = 1;
+			for (String tUsername : tActiveUsernames) {
+				try {
+					UIMember tMember = facade.getMemberByID(facade.getMemberIdByUsernameAndOrEmail(tUsername, null));
+					tActiveNames.add(i + ") " + tMember.getLastName() + " " + tMember.getFirstName());
+					i++;
+				}
+				catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+					continue;
+				}
+			}
+
+			return new ActiveConnectedData(facade.getActiveGuestsNumber(), tActiveNames);
 		}
 		catch (forum.server.updatedpersistentlayer.DatabaseRetrievalException e) {
 			throw new DatabaseRetrievalException();

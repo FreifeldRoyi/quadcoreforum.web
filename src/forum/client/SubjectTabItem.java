@@ -66,15 +66,11 @@ public class SubjectTabItem extends TabItem {
 		threadsPanel.setLayout(new FitLayout());
 
 
-		threadsTable = (subject == null)? new AsyncThreadsTableGrid(-1) :
-			new AsyncThreadsTableGrid(subject.getID());
+		threadsTable = (subject == null)? new AsyncThreadsTableGrid(new SubjectModel()) :
+			new AsyncThreadsTableGrid(subject);
 		threadsPanel.add(threadsTable);
 
 		this.add(threadsPanel, tNorthData);
-
-
-
-
 
 		messagesTree = new AsyncMessagesTreeGrid(threadsTable);
 
@@ -91,10 +87,6 @@ public class SubjectTabItem extends TabItem {
 					loadThreads();
 			}
 		});
-
-
-
-
 	}
 
 	public void changeToolBarVisible() {

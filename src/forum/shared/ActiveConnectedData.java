@@ -15,7 +15,7 @@ public class ActiveConnectedData implements Serializable {
 
 	private static final long serialVersionUID = -1473196384657990003L;
 
-	private Collection<String> activeUsernames;
+	private Collection<String> activeNames;
 	
 	private long guestsNumber;
 	
@@ -23,21 +23,21 @@ public class ActiveConnectedData implements Serializable {
 	
 	public ActiveConnectedData(long guestsNumber, Collection<String> connected) {
 		setGuestsNumber(guestsNumber);
-		setActiveUsernames(connected);
+		setActiveNames(connected);
 	}
 
 	/**
 	 * @return the activeUsernames
 	 */
-	public Collection<String> getActiveUsernames() {
-		return activeUsernames;
+	public Collection<String> getActiveNames() {
+		return activeNames;
 	}
 
 	/**
 	 * @param activeUsernames the activeUsernames to set
 	 */
-	public void setActiveUsernames(Collection<String> activeUsernames) {
-		this.activeUsernames = new ArrayList<String>(activeUsernames);
+	public void setActiveNames(Collection<String> activeUsernames) {
+		this.activeNames = new ArrayList<String>(activeUsernames);
 	}
 
 	/**

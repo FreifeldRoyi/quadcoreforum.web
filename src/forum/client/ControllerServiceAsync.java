@@ -1,6 +1,5 @@
 package forum.client;
 
-import java.awt.Component;
 import java.util.List;
 
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
@@ -51,16 +50,16 @@ public interface ControllerServiceAsync {
 			AsyncCallback<Void> callback);
 
 	void modifyMessage(long authorID, long messageID, String newTitle,
-			String newContent, AsyncCallback<Void> callback);
+			String newContent, AsyncCallback<MessageModel> callback);
 
 	void modifySubject(long authorID, long subjectID, String newName,
-			String newDescription, AsyncCallback<Void> callback);
+			String newDescription, AsyncCallback<SubjectModel> callback);
 
 	void login(long guestID, String username, String password,
 			AsyncCallback<ConnectedUserData> callback);
 
 	void modifyThread(long authorID, long threadID, String newTopic,
-			AsyncCallback<Void> callback);
+			AsyncCallback<ThreadModel> callback);
 
 	void logout(String username, AsyncCallback<ConnectedUserData> callback);
 	
