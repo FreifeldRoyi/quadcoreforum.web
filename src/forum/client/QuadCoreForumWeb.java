@@ -1,7 +1,7 @@
 package forum.client;
 
+
 import java.util.Collection;
-import java.util.Vector;
 
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
@@ -25,14 +25,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 
 import forum.shared.ActiveConnectedData;
-import forum.shared.ConnectedUserData;
-import forum.shared.Permission;
-import forum.shared.ConnectedUserData.UserType;
+import forum.shared.UserModel;
+import forum.shared.UserModel.UserType;
 import forum.shared.exceptions.database.DatabaseUpdateException;
-import forum.shared.tcpcommunicationlayer.ServerResponse;
 
 public class QuadCoreForumWeb implements EntryPoint {
-	public static ConnectedUserData CONNECTED_USER_DATA = null;
+	public static UserModel CONNECTED_USER_DATA = null;
 
 	private ToolBar statusBar; 
 	private MainPanelToolBar toolBar;
@@ -54,6 +52,7 @@ public class QuadCoreForumWeb implements EntryPoint {
 	public void onModuleLoad() {
 		
 		Registry.register("Servlet", SERVICE);
+		Registry.register("RegistrationForm", new RegistrationForm());
 		
 		Window.addWindowClosingHandler(new Window.ClosingHandler() {
 			@Override
@@ -93,17 +92,10 @@ public class QuadCoreForumWeb implements EntryPoint {
 	}
 
 	public static void connectAsGuest() {
-		SERVICE.addNewGuest(new AsyncCallback<ServerResponse>() {
+		SERVICE.addNewGuest(new AsyncCallback<UserModel>() {
 			@Override
-			public void onSuccess(ServerResponse result) {
-				String encodedView = result.getResponse();
-				String[] tSplitted = encodedView.split("\n");
-				String[] tUserDetails = tSplitted[0].split("\t");
-				long connectedUserID = Long.parseLong(tUserDetails[0]);
-				Collection<Permission> tPermissions = new Vector<Permission>();
-				for (int i = 1; i < tSplitted.length; i++)
-					tPermissions.add(Permission.valueOf(tSplitted[i]));
-				QuadCoreForumWeb.CONNECTED_USER_DATA = new ConnectedUserData(connectedUserID, tPermissions);
+			public void onSuccess(UserModel result) {
+				QuadCoreForumWeb.CONNECTED_USER_DATA = result;
 				((MainPanel)Registry.get("MainPanel")).changeLoginView();
 				((MainPanelToolBar)Registry.get("ToolBar")).switchToGuestView();
 			}
@@ -195,12 +187,10 @@ public class QuadCoreForumWeb implements EntryPoint {
 	}	
 
 	public static void updateActiveConnectedNumbers() {
-		WORKING_STATUS.setBusy("updating connected numbers ...");  
 		SERVICE.getActiveUsersNumber(new AsyncCallback<ActiveConnectedData>() {
 
 			@Override
 			public void onFailure(Throwable caught) {
-				WORKING_STATUS.clearStatus("Not working");
 			}
 
 			@Override

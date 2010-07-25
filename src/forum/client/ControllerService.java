@@ -7,9 +7,9 @@ import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
-import forum.shared.ConnectedUserData;
-import forum.shared.MessageModel;
 import forum.shared.SearchHitModel;
+import forum.shared.UserModel;
+import forum.shared.MessageModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.exceptions.database.DatabaseRetrievalException;
@@ -17,19 +17,22 @@ import forum.shared.exceptions.database.DatabaseUpdateException;
 import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.exceptions.message.SubjectNotFoundException;
 import forum.shared.exceptions.message.ThreadNotFoundException;
+import forum.shared.exceptions.user.MemberAlreadyExistsException;
 import forum.shared.exceptions.user.NotRegisteredException;
 import forum.shared.exceptions.user.WrongPasswordException;
 import forum.shared.ActiveConnectedData;
-import forum.shared.tcpcommunicationlayer.RegisterMessage;
-import forum.shared.tcpcommunicationlayer.ServerResponse;
 
 @RemoteServiceRelativePath("controller")
 public interface ControllerService extends RemoteService {
 
-	ServerResponse addNewGuest() throws DatabaseUpdateException;
+	UserModel addNewGuest() throws DatabaseUpdateException;
 	void disconnectClient(long clientID);
 
-	ServerResponse registerToForum(RegisterMessage data);
+	
+	 void registerToForum(final String username, final String password, final String lastName, 
+			final String firstName, final String email) throws MemberAlreadyExistsException, DatabaseUpdateException;
+	
+	
 	List<SubjectModel> getSubjects(SubjectModel father) 
 	throws SubjectNotFoundException, DatabaseRetrievalException;
 
@@ -63,10 +66,10 @@ public interface ControllerService extends RemoteService {
 	 */	
 
 
-	public ConnectedUserData login(long guestID, String username, String password) throws 
+	public UserModel login(long guestID, String username, String password) throws 
 	NotRegisteredException, WrongPasswordException, DatabaseRetrievalException;
 	
-	public ConnectedUserData logout(String username) throws 
+	public UserModel logout(String username) throws 
 	forum.shared.exceptions.user.NotConnectedException,
 	forum.shared.exceptions.database.DatabaseUpdateException;
 
@@ -187,9 +190,12 @@ public interface ControllerService extends RemoteService {
 
 
 
-
-
 	 */
+
+	//List<Object> searchByAuthor(String username);
+	
+	ThreadModel getThreadByID(long threadID, boolean shouldUpdateViews) throws ThreadNotFoundException, DatabaseRetrievalException;
+
 	public PagingLoadResult<SearchHitModel> searchByAuthor(
 			PagingLoadConfig loadConfig, String userName) 
 			throws MessageNotFoundException, 

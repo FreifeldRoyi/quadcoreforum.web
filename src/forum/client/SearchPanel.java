@@ -61,6 +61,7 @@ public class SearchPanel extends LayoutContainer
 			@Override
 			public void componentSelected(ButtonEvent ce) 
 			{
+				System.out.println("BUTTON SEARCH;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
 				openSearchHitsTable();
 			}
 		});

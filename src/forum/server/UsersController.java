@@ -16,12 +16,10 @@ import forum.server.domainlayer.user.Permission;
 import forum.server.updatedpersistentlayer.DatabaseUpdateException;
 import forum.server.updatedpersistentlayer.pipe.user.exceptions.MemberAlreadyExistsException;
 import forum.server.updatedpersistentlayer.pipe.user.exceptions.NotConnectedException;
-import forum.shared.ConnectedUserData;
+import forum.shared.UserModel;
 import forum.shared.exceptions.database.DatabaseRetrievalException;
 import forum.shared.exceptions.user.NotRegisteredException;
 import forum.shared.exceptions.user.WrongPasswordException;
-import forum.shared.tcpcommunicationlayer.RegisterMessage;
-import forum.shared.tcpcommunicationlayer.ServerResponse;
 
 /**
  * @author sepetnit
@@ -64,14 +62,14 @@ public class UsersController {
 	}
 
 
-	private ConnectedUserData userToConnectedUserDataConverter(UIUser user) {
+	private UserModel userToConnectedUserDataConverter(UIUser user) {
 		Collection<forum.shared.Permission> permissions = new ArrayList<forum.shared.Permission>();
 		for (Permission tCurrentPermission : user.getPermissions())
 			permissions.add(forum.shared.Permission.valueOf(tCurrentPermission.toString()));
-		return new ConnectedUserData(user.getID(), permissions);
+		return new UserModel(user.getID(), permissions);
 	}
 
-	public ConnectedUserData logout(String username) throws
+	public UserModel logout(String username) throws
 	forum.shared.exceptions.user.NotConnectedException, 
 	forum.shared.exceptions.database.DatabaseUpdateException {
 		try {
@@ -87,43 +85,41 @@ public class UsersController {
 		}
 	}
 
-	public ServerResponse addNewGuest() throws forum.shared.exceptions.database.DatabaseUpdateException {
+	public UserModel addNewGuest() throws forum.shared.exceptions.database.DatabaseUpdateException {
 		try {
-			ServerResponse returnObj = new ServerResponse("", true); 
 			UIUser tNewGuest = facade.addGuest();
-			returnObj.setGuestIDChanged();
-			returnObj.setConnectedGuestID(tNewGuest.getID());
-			connectedGuests.add(tNewGuest.getID());
-			returnObj.setHasExecuted(true);
-			returnObj.setResponse(tNewGuest.getID() + "");
-			return returnObj;
+			connectedGuests.add(tNewGuest.getID());			
+			Collection<forum.shared.Permission> tSharedPermissions = new HashSet<forum.shared.Permission>();
+			for (Permission p : tNewGuest.getPermissions())
+				tSharedPermissions.add(forum.shared.Permission.valueOf(p.toString()));
+
+			UserModel toReturn = new UserModel(tNewGuest.getID(), tSharedPermissions);
+
+			return toReturn;
+
 		}
 		catch (DatabaseUpdateException e) {
 			throw new forum.shared.exceptions.database.DatabaseUpdateException();
 		}
 	}
 
-	public ServerResponse registerToForum(RegisterMessage data) {
-		ServerResponse returnObj = new ServerResponse("", true); 
+	public void registerToForum(final String username, final String password, final String lastName, 
+			final String firstName, final String email) throws forum.shared.exceptions.user.MemberAlreadyExistsException,
+			forum.shared.exceptions.database.DatabaseUpdateException {
 		try {
-			facade.registerNewMember(data.getUsername(), data.getPassword(), 
-					data.getLastName(), data.getFirstName(), data.getEmail());
-			returnObj.setHasExecuted(true);
-			returnObj.setResponse("registersuccess\t" + "you successfuly registered the forum");
+			facade.registerNewMember(username, password, 
+					lastName, firstName, email);
 		}
 		catch (MemberAlreadyExistsException e) {
-			returnObj.setHasExecuted(false);
-			returnObj.setResponse("registererror\t" + "The following data already exists: " + e.getMessage());
+			throw new forum.shared.exceptions.user.MemberAlreadyExistsException(e.getMessage());
 		} 
 		catch (DatabaseUpdateException e) {
-			returnObj.setHasExecuted(false);
-			returnObj.setResponse("registererror\t" + e.getMessage());
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
 		}
-		return returnObj;
 	}
 
 	
-	public ConnectedUserData login(long guestID, String username, String password) throws 
+	public UserModel login(long guestID, String username, String password) throws 
 	NotRegisteredException, WrongPasswordException, DatabaseRetrievalException {
 		try {
 			/* unregister the user from being a guest */
@@ -143,7 +139,7 @@ public class UsersController {
 			for (Permission p : tResponseUser.getPermissions())
 				tSharedPermissions.add(forum.shared.Permission.valueOf(p.toString()));
 
-			ConnectedUserData toReturn = new ConnectedUserData(tResponseUser.getID(), tResponseUser.getUsername(),
+			UserModel toReturn = new UserModel(tResponseUser.getID(), tResponseUser.getUsername(),
 					tResponseUser.getLastName(), tResponseUser.getFirstName(), tResponseUser.getEmail(), type,
 					tSharedPermissions);
 

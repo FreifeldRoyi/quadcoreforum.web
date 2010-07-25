@@ -46,12 +46,9 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 			String searchPhrase)
 	{
 		super();
-		this.configs = new ArrayList<ColumnConfig>();
+		configs = new ArrayList<ColumnConfig>();
 		this.searchType = type;
 		this.resultsPerPage = numOfPages;
-		this.searchPhrase = searchPhrase;
-		System.out.println("constructor\n");
-		System.out.println("this is for vitali\n");
 	}
 	
 	@Override  
@@ -69,11 +66,9 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		
 		this.add(this.grid);
 		this.setLayout(new FitLayout());
-		System.out.println("creating table");
-		System.out.println("phrase to search is: " + this.searchPhrase);
+		
 		//TODO add listener here
-		loader.load(0,this.resultsPerPage);
-		System.out.println("done loading");
+		loader.load(0, this.resultsPerPage);
 	}
 
 	private void initializeGrid() 
@@ -131,15 +126,12 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 			{
 				if (searchType.equals("author"))
 				{
-					System.out.println("searching by author\n");
 					service.searchByAuthor((PagingLoadConfig)loadConfig, 
 							searchPhrase, new AsyncCallback<PagingLoadResult<SearchHitModel>>() {
 
 								@Override
 								public void onFailure(Throwable caught) 
 								{
-									if (caught instanceof NotRegisteredException)
-										System.out.println("problem: " + caught.getMessage());
 									callback.onFailure(caught);
 									grid.el().unmask();
 									hitsPager.setEnabled(true);
@@ -149,11 +141,10 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 								public void onSuccess(
 										PagingLoadResult<SearchHitModel> result) 
 								{
-									
 									callback.onSuccess(result);
 									grid.el().unmask();
 									hitsPager.setEnabled(true);
-									System.out.println("result.getTotalLength() = " + result.getTotalLength());
+									
 									if(result.getTotalLength() == 0)
 									{
 										hitsPager.setEnabled(false);

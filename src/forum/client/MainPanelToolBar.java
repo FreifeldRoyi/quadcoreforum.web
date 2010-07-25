@@ -23,8 +23,8 @@ import com.extjs.gxt.ui.client.widget.toolbar.LabelToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import forum.shared.ConnectedUserData;
-import forum.shared.ConnectedUserData.UserType;
+import forum.shared.UserModel;
+import forum.shared.UserModel.UserType;
 import forum.shared.exceptions.database.DatabaseRetrievalException;
 import forum.shared.exceptions.database.DatabaseUpdateException;
 import forum.shared.exceptions.user.NotRegisteredException;
@@ -93,6 +93,19 @@ public class MainPanelToolBar extends ToolBar {
 		tFastLoginMenu.add(fastLoginPasswordField);
 		tFastLoginMenu.add(new LabelToolItem());
 
+		
+		registerButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				MainPanel.changeMainViewToPanel((RegistrationForm)Registry.get("RegistrationForm"));
+			}
+		});
+		
+		
+		
+		
+		
+		
 		fastLoginMenuButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 
 			@Override
@@ -147,11 +160,11 @@ public class MainPanelToolBar extends ToolBar {
 
 	private void addLoginFunctionality() {
 
-		final AsyncCallback<ConnectedUserData> tLoginCallBack = new AsyncCallback<ConnectedUserData>() {
+		final AsyncCallback<UserModel> tLoginCallBack = new AsyncCallback<UserModel>() {
 			private MainPanel mainPanel = Registry.get("MainPanel");
 
 			@Override
-			public void onSuccess(ConnectedUserData result) {
+			public void onSuccess(UserModel result) {
 				fastLoginMenuButton.setEnabled(true);
 				loginButton.setEnabled(true);
 				QuadCoreForumWeb.CONNECTED_USER_DATA = result;
@@ -239,7 +252,7 @@ public class MainPanelToolBar extends ToolBar {
 				QuadCoreForumWeb.WORKING_STATUS.setBusy("Logging out...");
 				QuadCoreForumWeb.SERVICE.logout(
 						QuadCoreForumWeb.CONNECTED_USER_DATA.getUsername(), 
-						new AsyncCallback<ConnectedUserData>() {
+						new AsyncCallback<UserModel>() {
 							private MainPanel mainPanel = Registry.get("MainPanel");
 
 							@Override
@@ -257,7 +270,7 @@ public class MainPanelToolBar extends ToolBar {
 							}
 
 							@Override
-							public void onSuccess(ConnectedUserData result) {
+							public void onSuccess(UserModel result) {
 								QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 								logoutButton.setEnabled(true);
 								QuadCoreForumWeb.CONNECTED_USER_DATA = result;

@@ -6,21 +6,21 @@ import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import forum.shared.ConnectedUserData;
+import forum.shared.ActiveConnectedData;
 import forum.shared.MessageModel;
 import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
-import forum.shared.ActiveConnectedData;
-import forum.shared.tcpcommunicationlayer.RegisterMessage;
-import forum.shared.tcpcommunicationlayer.ServerResponse;
+import forum.shared.UserModel;
 
 public interface ControllerServiceAsync {
-	void addNewGuest(AsyncCallback<ServerResponse> callback);	
+	void addNewGuest(AsyncCallback<UserModel> callback);	
 
 	void disconnectClient(long clientID, AsyncCallback<Void> callback);
 
-	void registerToForum(RegisterMessage data, AsyncCallback<ServerResponse> callback);	
+	public void registerToForum(final String username, final String password, final String lastName, 
+			final String firstName, final String email, AsyncCallback<Void> callback);
+	
 	void getSubjects(SubjectModel father, AsyncCallback<List<SubjectModel>> callback);
 
 	void getSubjectByID(long sujectID, AsyncCallback<SubjectModel> callback);
@@ -28,6 +28,9 @@ public interface ControllerServiceAsync {
 	void getThreads(PagingLoadConfig loadConfig, long fatherID, 
 			AsyncCallback<PagingLoadResult<ThreadModel>> callback);
 
+	void getThreadByID(long threadID, boolean shouldUpdateViews, AsyncCallback<ThreadModel> callback);
+
+	
 	void getReplies(long threadID, MessageModel loadConfig, boolean shouldUpdateViews,
 			AsyncCallback<List<MessageModel>> tNewCallback);
 
@@ -57,12 +60,12 @@ public interface ControllerServiceAsync {
 			String newDescription, AsyncCallback<SubjectModel> callback);
 
 	void login(long guestID, String username, String password,
-			AsyncCallback<ConnectedUserData> callback);
+			AsyncCallback<UserModel> callback);
 
 	void modifyThread(long authorID, long threadID, String newTopic,
 			AsyncCallback<ThreadModel> callback);
 
-	void logout(String username, AsyncCallback<ConnectedUserData> callback);
+	void logout(String username, AsyncCallback<UserModel> callback);
 	
 	void searchByAuthor(PagingLoadConfig loadConfig, 
 			String username, AsyncCallback<PagingLoadResult<SearchHitModel>> callback);

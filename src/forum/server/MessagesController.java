@@ -85,6 +85,20 @@ public class MessagesController {
 		}
 	}
 
+	public ThreadModel getThreadByID(long threadID, boolean shouldUpdateViews) throws forum.shared.exceptions.message.ThreadNotFoundException, 
+	forum.shared.exceptions.database.DatabaseRetrievalException {
+		try {
+			return threadToThreadModelConvertor(facade.getThreadByID(threadID, shouldUpdateViews));
+		}
+		catch (ThreadNotFoundException e) {
+			throw new forum.shared.exceptions.message.ThreadNotFoundException(e.getThreadID());
+		}
+		catch (DatabaseRetrievalException e) {
+			System.out.println("ddddddddddddddddddddddddd");
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+	}
+	
 	public void deleteSubject(long userID, final long fatherID, 
 			long subjectID) throws forum.shared.exceptions.message.SubjectNotFoundException,
 			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException,
@@ -294,7 +308,6 @@ public class MessagesController {
 			Collection<UIThread> tThreads = facade.getThreads(fatherID);
 			List<ThreadModel> tData = new ArrayList<ThreadModel>();
 
-
 			int tStart = loadConfig.getOffset();  
 			int limit = tThreads.size();  
 			if (loadConfig.getLimit() > 0)
@@ -355,7 +368,6 @@ public class MessagesController {
 				toReturn.add(this.getMessageByID(threadID));
 			else {
 				Collection<UIMessage> tRetrievedMessages = facade.getReplies(father.getID(), shouldUpdateViews);
-
 				if (tRetrievedMessages.isEmpty()) {
 					return toReturn;
 				}
@@ -384,21 +396,17 @@ public class MessagesController {
 			forum.shared.exceptions.message.ThreadNotFoundException, 
 			forum.shared.exceptions.message.SubjectNotFoundException, 
 			NotRegisteredException
-	{	
-		System.out.println("I'm inside search function!");
+	{
 		SearchHit[] rawHits = null;
 		if (type.equals("author"))
 		{
 			try 
 			{
-				long memberID = this.facade.getMemberIdByUsernameAndOrEmail(searchPhrase, null);
-				System.out.println("Im after retrieving member's ID. and it is " + memberID);
-				rawHits = this.facade.searchByAuthor(memberID,
+				rawHits = this.facade.searchByAuthor(this.facade.getMemberIdByUsernameAndOrEmail(searchPhrase, null),
 						0, Integer.MAX_VALUE);
 			} 
 			catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
 			{
-				System.out.println("Im inside catch clause and ID is " + e.getUserID());
 				throw new NotRegisteredException(e.getUserID());
 			}
 			catch (DatabaseRetrievalException e) 
@@ -448,8 +456,7 @@ public class MessagesController {
 	private SearchHitModel SearchHitToModelConvertor(SearchHit hit) 
 	throws MessageNotFoundException, 
 	forum.shared.exceptions.database.DatabaseRetrievalException, 
-	forum.shared.exceptions.message.ThreadNotFoundException, 
-	forum.shared.exceptions.message.SubjectNotFoundException
+	forum.shared.exceptions.message.ThreadNotFoundException, forum.shared.exceptions.message.SubjectNotFoundException
 	{
 		UIMessage tMsg = hit.getMessage();
 		long tMsgID = tMsg.getMessageID();

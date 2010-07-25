@@ -8,6 +8,8 @@ import com.extjs.gxt.ui.client.Style.LayoutRegion;
 import com.extjs.gxt.ui.client.Style.Scroll;
 import com.extjs.gxt.ui.client.core.XTemplate;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
+import com.extjs.gxt.ui.client.event.Events;
+import com.extjs.gxt.ui.client.event.KeyListener;
 import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.event.MessageBoxEvent;
 import com.extjs.gxt.ui.client.event.SelectionListener;
@@ -41,7 +43,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 
 	// used for replying and modifying
 	private MessageModel messageModel;
-	private TreeGrid<MessageModel> tree;
+	private TreeGrid<MessageModel> messagesTree;
 	private TreeStore<MessageModel> messagesStore;
 
 	// used for threads opening
@@ -86,6 +88,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 		titleOrNameField.setAutoValidate(true);
 		topicField.setAutoValidate(true);
 
+		
 		addSubjectListener = new SelectionListener<ButtonEvent>() {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
@@ -141,6 +144,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 						}
 					}
 
+					@SuppressWarnings("unchecked")
 					@Override
 					public void onSuccess(SubjectModel result) {
 						replyModifyOpenAddButton.setEnabled(true);
@@ -151,13 +155,16 @@ public class AddReplyModifyForm extends LayoutContainer {
 							subjectsStore.add(subjectModel, result, true);
 						subjectsStore.commitChanges();
 						subjectsTree.getSelectionModel().select(result, false);
-						ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
-						tMainViewPanel.removeAll();
-						tMainViewPanel.add((TabPanel)Registry.get("maincontentpanel"));
-						tMainViewPanel.layout();
+						subjectsTree.getSelectionModel().fireEvent(Events.SelectionChange);
+						MainPanel.changeMainViewToSubjectsAndThreads();			
+						
+						
 						titleOrNameField.clear();
 						contentOrDescriptionField.clear();
-						topicField.clear();
+						if (topicField != null)
+							topicField.clear();
+						((TreePanel<SubjectModel>)Registry.get("SubjectsTree")).fireEvent(Events.OnMouseDown);
+						
 						Info.display("Successful subject adding", "The subject was added successfully");
 					}
 				});
@@ -175,17 +182,14 @@ public class AddReplyModifyForm extends LayoutContainer {
 						return;
 					}
 				}
-
 				QuadCoreForumWeb.WORKING_STATUS.setBusy("Opening thread...");
 				QuadCoreForumWeb.SERVICE.addNewThread(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
-						subjectID, topicField.getValue(),
+						subjectModel.getID(), topicField.getValue(),
 						titleOrNameField.getValue(),
 						contentOrDescriptionField.getValue(), new AsyncCallback<ThreadModel>() {
 					@Override
 					public void onFailure(Throwable caught) {
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-						// TODO: //
-						caught.printStackTrace();
 					}
 
 					@Override
@@ -194,10 +198,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 						threadsStore.add(result);
 						threadsStore.commitChanges();
 						threadsGrid.getSelectionModel().select(result, false);
-						ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
-						tMainViewPanel.removeAll();
-						tMainViewPanel.add((TabPanel)Registry.get("maincontentpanel"));
-						tMainViewPanel.layout();
+						MainPanel.changeMainViewToSubjectsAndThreads();
 						titleOrNameField.clear();
 						contentOrDescriptionField.clear();
 						topicField.clear();
@@ -218,16 +219,18 @@ public class AddReplyModifyForm extends LayoutContainer {
 						return;
 					}
 				}
+				replyModifyOpenAddButton.setEnabled(false);
 				QuadCoreForumWeb.WORKING_STATUS.setBusy("Adding reply...");
 				QuadCoreForumWeb.SERVICE.addReplyToMessage(
 						QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
 						messageModel.getID(), 
 						titleOrNameField.getValue(), 
-						contentOrDescriptionField.getValue(),
+						trim(contentOrDescriptionField.getValue()),
 						new AsyncCallback<MessageModel>() {
 
 							@Override
 							public void onFailure(Throwable caught) {
+								replyModifyOpenAddButton.setEnabled(true);
 								QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 
 							}
@@ -237,13 +240,14 @@ public class AddReplyModifyForm extends LayoutContainer {
 								QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 								messagesStore.add(messageModel, result, true);
 								messagesStore.commitChanges();
-								tree.getSelectionModel().select(result, false);
-								ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
-								tMainViewPanel.removeAll();
-								tMainViewPanel.add((TabPanel)Registry.get("maincontentpanel"));
-								tMainViewPanel.layout();
+//								messagesTree.getView().ensureVisible(
+//										messagesTree.getView().findRowIndex(messagesTree.getView().getRow(result)),
+//										0, false);
+								MainPanel.changeMainViewToSubjectsAndThreads();
+								messagesTree.getSelectionModel().select(result, false);
 								titleOrNameField.clear();
 								contentOrDescriptionField.clear();
+								replyModifyOpenAddButton.setEnabled(true);
 								Info.display("Successful reply", "The reply was added successfully");
 							}
 						});
@@ -282,11 +286,11 @@ public class AddReplyModifyForm extends LayoutContainer {
 						messageModel.setTitle(result.getTitle());
 						messageModel.setContent(result.getContent());
 						messagesStore.commitChanges();
-						tree.getSelectionModel().select(result, false);
-						ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
-						tMainViewPanel.removeAll();
-						tMainViewPanel.add((TabPanel)Registry.get("maincontentpanel"));
-						tMainViewPanel.layout();
+
+						MainPanel.changeMainViewToSubjectsAndThreads();
+	
+						messagesTree.getSelectionModel().select(result, false);
+
 						titleOrNameField.clear();
 						contentOrDescriptionField.clear();
 						Info.display("Successful modification", "The message was modified successfully");
@@ -298,14 +302,14 @@ public class AddReplyModifyForm extends LayoutContainer {
 
 	}
 
-
-	private String getMaxThreeLinesDescription(String htmlContent) {
+	private String trim(String htmlContent) {
+		System.out.println("beforrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr " + htmlContent);
 		boolean cont = false;
 		do {
 			if (htmlContent.startsWith("<br>")) {
 				htmlContent = htmlContent.substring(4);
 				cont = true;
-			} 
+			}
 			else if (htmlContent.startsWith("&nbsp;")) {
 				htmlContent = htmlContent.substring(6);
 				cont = true;
@@ -328,9 +332,17 @@ public class AddReplyModifyForm extends LayoutContainer {
 				cont = false;
 		}
 		while (cont);
-		
-		System.out.println("HTML = " + htmlContent);
+		if (htmlContent.startsWith("?"))
+			htmlContent = htmlContent.substring(1);
+		if (htmlContent.endsWith("?"))
+			htmlContent = htmlContent.substring(0, htmlContent.length() - 1);
+			
+		System.out.println("trimmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmed " + htmlContent);
+		return htmlContent;
+	}
 
+	private String getMaxThreeLinesDescription(String htmlContent) {
+		htmlContent = this.trim(htmlContent);
 		if (htmlContent.split("<br>").length > 3)
 			return null;
 		else
@@ -349,9 +361,8 @@ public class AddReplyModifyForm extends LayoutContainer {
 
 	private void setPanelView(boolean addTopic) {
 		panel.removeAll();
-
 		if (addTopic)
-			panel.add(topicField, new FormData("100%"));  
+			panel.add(topicField, new FormData("100%"));
 		panel.add(titleOrNameField, new FormData("100%"));  
 		panel.add(contentOrDescriptionField, new FormData("100% -53"));
 		panel.addButton(replyModifyOpenAddButton);
@@ -374,13 +385,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 		topicField.setFieldLabel("Topic");
 		topicField.setBorders(true);
 
-
-		titleOrNameField.setFieldLabel("Title");
 		titleOrNameField.setBorders(true);
-
-
-		contentOrDescriptionField.setFieldLabel("Content");
-
 
 
 		cancelButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
@@ -406,9 +411,11 @@ public class AddReplyModifyForm extends LayoutContainer {
 	}
 
 	private void initMessageReplyModifyDialog(MessageModel message, TreeGrid<MessageModel> messagesTree, TreeStore<MessageModel> store) {
-		this.tree = messagesTree;
+		this.messagesTree = messagesTree;
 		this.messagesStore = store;
 		this.messageModel = message;
+		titleOrNameField.setFieldLabel("Title");
+		contentOrDescriptionField.setFieldLabel("Content");
 		this.layout();
 		previousPanel.setHeading("Previous message");
 		XTemplate tpl = XTemplate.create("<p><b>Date of publish:</b> {date}</p><br>" +
@@ -445,6 +452,8 @@ public class AddReplyModifyForm extends LayoutContainer {
 	public void initThreadsOpenningDialog(SubjectModel fatherSubject, Grid<ThreadModel> threadsGrid,
 			ListStore<ThreadModel> threadsStore) {
 		setPanelView(true);
+		titleOrNameField.setFieldLabel("Title");
+		contentOrDescriptionField.setFieldLabel("Content");
 		this.threadsGrid = threadsGrid;
 		this.threadsStore = threadsStore;
 		this.replyModifyOpenAddButton.setText("Open new");
@@ -452,7 +461,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 		this.replyModifyOpenAddButton.addSelectionListener(this.openThreadListener);
 		panel.setHeading("Open new thread");
 		previousPanel.setHeading("Father subject");
-
+		this.subjectModel = fatherSubject;
 		XTemplate tpl = XTemplate.create("<p><b>Name:</b> {name}</p><br>" +
 		"<p><b>Description:</b> {description}</p>");  		
 		
