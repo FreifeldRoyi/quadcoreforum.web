@@ -70,8 +70,19 @@ public class MainPanelToolBar extends ToolBar {
 		this.fastLoginButton = new Button("Login");
 		this.loginButton = new Button("Login");
 		this.registerButton = new Button("Register");
-		this.searchButton = new Button("Search");
+		this.searchButton = new Button("Search", new SelectionListener<ButtonEvent>() {
 
+			@Override
+			public void componentSelected(ButtonEvent ce) 
+			{
+				ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
+				tMainViewPanel.removeAll();
+				SearchPanel sp = new SearchPanel();
+				tMainViewPanel.add(sp);
+				tMainViewPanel.layout();
+			}
+		});
+		
 		fastLoginMenuButton = new Button("Fast Login"); 
 
 		Menu tFastLoginMenu = new Menu();

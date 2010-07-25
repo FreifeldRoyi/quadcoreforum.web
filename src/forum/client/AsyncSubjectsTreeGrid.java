@@ -344,10 +344,18 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 						tCurrentItem = tStack.pop();
 						mainPanel.add(tCurrentItem);
 					}
+						
+					ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
+					TabPanel tThreadsPanel = (TabPanel)Registry.get("maincontentpanel");
 					
-						mainPanel.setSelection(tCurrentItem);
-
+					if (tThreadsPanel.getParent() != tMainViewPanel)
+					{
+						tMainViewPanel.removeAll();
+						tMainViewPanel.add(tThreadsPanel);
+						tMainViewPanel.layout();
+					}
 					
+					mainPanel.setSelection(tCurrentItem);	
 				}
 			}
 		};

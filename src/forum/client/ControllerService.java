@@ -9,6 +9,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 import forum.shared.ConnectedUserData;
 import forum.shared.MessageModel;
+import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.exceptions.database.DatabaseRetrievalException;
@@ -189,6 +190,19 @@ public interface ControllerService extends RemoteService {
 
 
 	 */
-
-	List<Object> searchByAuthor(String username);
+	public PagingLoadResult<SearchHitModel> searchByAuthor(
+			PagingLoadConfig loadConfig, String userName) 
+			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
+			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
+	
+	public PagingLoadResult<SearchHitModel> searchByContent(
+			PagingLoadConfig loadConfig, String userName) 
+			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
+			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
 }

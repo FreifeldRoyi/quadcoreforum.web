@@ -13,9 +13,12 @@ import forum.client.ControllerService;
 import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.MainForumLogic;
 import forum.server.domainlayer.interfaces.UIMember;
+import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
+import forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException;
 import forum.shared.ActiveConnectedData;
 import forum.shared.ConnectedUserData;
 import forum.shared.MessageModel;
+import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.exceptions.database.DatabaseRetrievalException;
@@ -226,39 +229,7 @@ ControllerService {
 		// if the ids are the same then no otherwise yes
 		public abstract void getPath(Component comp, long prevFatherMessageID, long messageID);
 	}
-
-
-
-
-
-
 	 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	/**
 	 * This method is called when a browser window is closed and therefore the connected client (either guest or logged in)
@@ -319,9 +290,28 @@ ControllerService {
 		return messagesController.getReplies(threadID, loadConfig, shouldUpdateViews);
 	}
 
-	@Override // TODO: /////////////////
-	public List<Object> searchByAuthor(String username) {
-		return null;
+	@Override
+	public PagingLoadResult<SearchHitModel> searchByAuthor(
+			PagingLoadConfig loadConfig, String userName) 
+			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
+			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
+			ThreadNotFoundException, 
+			SubjectNotFoundException
+	{
+		return messagesController.search(loadConfig, "author", userName);
+	}
+
+	@Override
+	public PagingLoadResult<SearchHitModel> searchByContent(
+			PagingLoadConfig loadConfig, String cont) 
+			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
+			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
+			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
+			ThreadNotFoundException, 
+			SubjectNotFoundException 
+	{
+		return messagesController.search(loadConfig, "content", cont);
 	}
 
 }
