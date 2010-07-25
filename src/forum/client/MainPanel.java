@@ -2,11 +2,13 @@ package forum.client;
 
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.LayoutRegion;
+import com.extjs.gxt.ui.client.util.IconHelper;
 import com.extjs.gxt.ui.client.util.Margins;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.TabItem;
 import com.extjs.gxt.ui.client.widget.TabPanel;
+import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
@@ -46,13 +48,13 @@ public class MainPanel extends LayoutContainer
 
 	private void mainContentPanelInit() {
 		
-		AddReplyModifyForm tAddReplyForm = new AddReplyModifyForm();
-		tAddReplyForm.setVisible(true);
+//		AddReplyModifyForm tAddReplyForm = new AddReplyModifyForm();
+//		tAddReplyForm.setVisible(true);
 		
 		
 		Registry.register("MainViewPanel", mainPanel);
 		Registry.register("maincontentpanel", mainContentPanel);
-		Registry.register("AddReply", tAddReplyForm);
+//		Registry.register("AddReply", tAddReplyForm);
 		Registry.register("NavigatorPanel", navigatorPanel);
 		
 		
@@ -139,6 +141,9 @@ public class MainPanel extends LayoutContainer
 
 	private void navigationPanelInit() {
 
+		Button tRefreshRootSubjectsButton = new Button("", IconHelper.createStyle("subjectsRefresh"));
+		Registry.register("RefreshRootSubjectsButton", tRefreshRootSubjectsButton);
+		navigatorPanel.getHeader().addTool(tRefreshRootSubjectsButton);
 		navigatorPanel.setHeading("Navigation");  
 		navigatorPanel.setBorders(false);
 		navigatorPanel.setBodyStyle("fontSize: 12px; padding: 0px");  

@@ -15,6 +15,7 @@ import com.extjs.gxt.ui.client.widget.TabPanel;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
+import com.extjs.gxt.ui.client.widget.treepanel.TreePanel;
 
 import forum.shared.SubjectModel;
 import forum.shared.UserModel.UserType;
@@ -43,6 +44,7 @@ public class SubjectTabItem extends TabItem {
 
 		if (subject == null)
 			Registry.register("defaulttab", this);
+		
 		
 		this.setClosable(subject != null);
 
@@ -87,13 +89,17 @@ public class SubjectTabItem extends TabItem {
 		this.add(messagesTree, tSouthData);
 
 		this.addListener(Events.Close, new Listener<BaseEvent>() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public void handleEvent(BaseEvent be) {
 				
 				TabPanel tMainTabbedPanel = (TabPanel)Registry.get("maincontentpanel");
-				if (tMainTabbedPanel.getItems().size() == 0)
+				if (tMainTabbedPanel.getItems().size() == 0) {
 					tMainTabbedPanel.add((TabItem) Registry.get("defaulttab"));
-
+					TreePanel<SubjectModel> subjectsTree = (TreePanel<SubjectModel>)Registry.get("SubjectsTree");
+					if (subjectsTree != null)
+						subjectsTree.getSelectionModel().deselectAll();
+				}
 				
 			}
 		});

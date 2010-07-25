@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import com.extjs.gxt.ui.client.data.BaseTreeModel;
+import com.google.gwt.i18n.client.DateTimeFormat;
 
 /**
  * @author sepetnit
@@ -15,6 +16,7 @@ import com.extjs.gxt.ui.client.data.BaseTreeModel;
 public class MessageModel extends BaseTreeModel implements Serializable {
 
 	private static final long serialVersionUID = -3784056061324370307L;
+
 
 	public MessageModel() { }
 
@@ -119,13 +121,18 @@ public class MessageModel extends BaseTreeModel implements Serializable {
 	 */
 	public void setContent(String content) {
 		set("content", content);
+		this.updateDisplay();
 	}
 
-	// <br
 	private void updateDisplay() {
 		this.set("display", "<b><a style=\"color: #385F95; text-decoration: none;\" >" 
 				+ this.getTitle() + "&nbsp</a></b>--&nbsp<a style=\"color: #385F95; " +
-						"text-decoration: none;\"> "+
+				"text-decoration: none;\"> "+
 				"By " + this.getAuthorUsername() + "</a>");
+		if (getContent() != null) {
+			String tRenderedContent = getContent().replace('\n' + "", "<br>");
+			tRenderedContent = tRenderedContent.replace(' ' + "", "&nbsp;");
+			this.set("SelectedContent", tRenderedContent); 
+		}
 	}
 }
