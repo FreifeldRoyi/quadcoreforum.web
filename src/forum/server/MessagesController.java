@@ -354,9 +354,13 @@ public class MessagesController {
 	private String getAuthorUsername(UIMessage message) {
 		String toReturn = "<Author-Not-Found>";
 		try {
+			System.out.println("Trying to fetch author's user name");
 			toReturn = facade.getMemberByID(message.getAuthorID()).getUsername();
+			System.out.println("fetchin completed. author is: " + toReturn);
 		}
-		catch (Exception e) {}
+		catch (Exception e) {
+			System.out.println("error has occured: " + e.getMessage());
+		}
 		return toReturn;		
 	}
 
@@ -404,6 +408,7 @@ public class MessagesController {
 			{
 				rawHits = this.facade.searchByAuthor(this.facade.getMemberIdByUsernameAndOrEmail(searchPhrase, null),
 						0, Integer.MAX_VALUE);
+				System.out.println("raw Hits fetched");
 			} 
 			catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
 			{
@@ -411,6 +416,7 @@ public class MessagesController {
 			}
 			catch (DatabaseRetrievalException e) 
 			{
+				System.out.println("I'm inside catch clause database retrieval exception");
 				throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 			}
 		}
@@ -431,6 +437,15 @@ public class MessagesController {
 		if (loadConfig.getLimit() > 0)
 			limit = Math.min(tStart + loadConfig.getLimit(), limit);  
 		
+		if (tSearchData == null)
+		{
+			System.out.println("fuck-it");
+		}
+		for (String prop : loadConfig.getPropertyNames())
+		{
+			System.out.println(prop);
+		}
+		
 		return new BasePagingLoadResult<SearchHitModel>(tSearchData, loadConfig.getOffset(), tSearchData.size());
 	}
 	
@@ -444,8 +459,10 @@ public class MessagesController {
 			
 		if (rawHits != null)
 		{
+			System.out.println("Num of results is: " + rawHits.length);
 			for (SearchHit hit : rawHits)
 			{
+				System.out.println("" + hit.toString() + "\n");
 				toReturn.add(SearchHitToModelConvertor(hit));
 			}
 		}	
@@ -462,7 +479,9 @@ public class MessagesController {
 		long tMsgID = tMsg.getMessageID();
 		String tTitle = tMsg.getTitle();
 		String tAuthor = this.getAuthorUsername(tMsg);
-		Date tDate = tMsg.getDateTime();
+		System.out.println("before Date");
+		String tDate = tMsg.getDate();
+		System.out.println("after Date");
 		double tScore = hit.getScore();
 		
 		Collection<MessageModel> tMsgPath = new java.util.Vector<MessageModel>();

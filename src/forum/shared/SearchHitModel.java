@@ -21,7 +21,7 @@ public class SearchHitModel implements ModelData, Serializable
 	
 	public SearchHitModel(long msgID, Collection<MessageModel> msgPath,
 			ThreadModel contThread, Collection<SubjectModel> subjPath, String title, 
-			String authorUserName, Date date, double score)
+			String authorUserName, String date, double score)
 	{
 		this();
 		this.setMessageID(msgID);
@@ -109,7 +109,7 @@ public class SearchHitModel implements ModelData, Serializable
 	/**
 	 * @param date - the date the message was written
 	 */
-	public void setDate(Date date)
+	public void setDate(String date)
 	{
 		this.set("date", date);
 	}
