@@ -8,6 +8,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import forum.shared.ActiveConnectedData;
 import forum.shared.MessageModel;
+import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.UserModel;
@@ -66,6 +67,9 @@ public interface ControllerServiceAsync {
 
 	void logout(String username, AsyncCallback<UserModel> callback);
 	
-	void searchByAuthor(String username, AsyncCallback<List<Object>> callback);
+	void searchByAuthor(PagingLoadConfig loadConfig, 
+			String username, AsyncCallback<PagingLoadResult<SearchHitModel>> callback);
 	
+	void searchByContent(PagingLoadConfig loadConfig,
+			String cont, AsyncCallback<PagingLoadResult<SearchHitModel>> callback);	
 }

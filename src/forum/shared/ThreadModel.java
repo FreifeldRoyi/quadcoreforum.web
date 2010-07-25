@@ -117,7 +117,5 @@ public class ThreadModel implements ModelData, Serializable {
 			properties = new HashMap<String, Object>();
 		properties.put(property, value);
 		return value;
-	}
-
-	
+	}	
 }
