@@ -72,3 +72,11 @@ h1 {
 	padding: 0px;
 	background-color: rgb(240, 240, 240);
 }
+
+.subjectsRefresh {
+	background-image: url(../ext-resources/images/default/grid/refresh.gif);
+}
+
+.subjectsLoading {
+	background-image: url(../ext-resources/images/default/grid/loading.gif);
+}

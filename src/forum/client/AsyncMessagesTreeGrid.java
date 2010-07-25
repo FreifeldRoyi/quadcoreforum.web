@@ -26,6 +26,8 @@ import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.button.Button;
+import com.extjs.gxt.ui.client.widget.form.TextArea;
+import com.extjs.gxt.ui.client.widget.grid.CellEditor;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnData;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
@@ -71,13 +73,13 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 	private ToolBar toolbar;
 
 	private boolean selectionChanged;
-	
+
 	public AsyncMessagesTreeGrid(AsyncThreadsTableGrid threadsTable) {
 		this.threadsTable = threadsTable;
 		this.threadID = -1;
 	}
 
-	
+
 	public void changeThreadID(long threadID, boolean selectionChanged) {
 		this.selectionChanged = selectionChanged;
 		System.out.println("Changing threadID");
@@ -132,7 +134,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 					@Override
 					public void onFailure(Throwable caught) {
-						tree.getStore().getLoader().load(null);
+						tree.getStore().getLoader().load();
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 
@@ -152,7 +154,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 					QuadCoreForumWeb.WORKING_STATUS.setBusy("Loading messages...");
 					service.getReplies(threadID, (MessageModel) loadConfig, selectionChanged, tNewCallback);
 				}
-				
+
 			} 
 		};  	
 
@@ -173,15 +175,17 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 		XTemplate tpl = XTemplate.create("<p><b>Date of publish:</b> {date}</p><br>" +
 				"<p><b>Author:</b> {authorUsername}</p><br>" +
 				"<p><b>Title:</b> {title}</p><br>" +
-		"<p><b>Content:</b> {content}</p>");  
-
+		"<p><b>Content:</b> {SelectedContent}</p>");
 
 		this.expander = new RowExpander(); 
 
 		expander.setDateTimeFormat(DateTimeFormat.getMediumDateTimeFormat());  
+	
+		
+		expander.setTemplate(tpl);
+		
 
-		expander.setTemplate(tpl);  
-
+		
 
 		ColumnConfig name = new ColumnConfig("display", "Name", 800);  
 		name.setRenderer(new TreeGridCellRenderer<MessageModel>() {
@@ -318,10 +322,10 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 	}
 
-	
-	
-	
-	
+
+
+
+
 	private void invokeSelectListenerOperation(final MessageModel model) {
 		service.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
 
@@ -343,13 +347,13 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 					if (tRow != null)
 						expander.expandRow(tree.getView().findRowIndex(tRow));
 					allowReplyModifyDeleteButtons(tSelected);
-					
+
 				}
 			}
 		});
 	}
 
-	
+
 	private void invokeExpansionOperation(final MessageModel model) {
 		service.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
 
@@ -371,20 +375,20 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				store.commitChanges();
 				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
 
-/*				if (tSelected != null) {
+				/*				if (tSelected != null) {
 					com.google.gwt.dom.client.Element tRow = tree.getTreeView().getRow(tSelected);
 					if (tRow != null)
 						expander.expandRow(tree.getView().findRowIndex(tRow));
 					allowReplyModifyDeleteButtons(tSelected);
-					
+
 				}
-									*/
+				 */
 
 			}
 		});
 	}
 
-	
+
 	public void setToolBarVisible(boolean value) {
 		this.toolbar.setVisible(value);
 		this.messagesPanel.layout();
@@ -392,11 +396,11 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 		messagesPanel.fireEvent(Events.Resize);
 		tree.fireEvent(Events.Resize);
 		fireEvent(Events.Resize);
-/*		messagesPanel.add(tree);
+		/*		messagesPanel.add(tree);
 		setScrollMode(Scroll.AUTOY);
 		add(messagesPanel);  
-*/
-		
+		 */
+
 	}
 
 	public void setGuestView() {
@@ -454,7 +458,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
 
 				tMainViewPanel.removeAll();
-				AddReplyModifyForm tAddReply = (AddReplyModifyForm)Registry.get("AddReply");
+				AddReplyModifyForm tAddReply = new AddReplyModifyForm();//(AddReplyModifyForm)Registry.get("AddReply");
 				tAddReply.initReplyDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
 				tMainViewPanel.add(tAddReply);
 				tMainViewPanel.layout();
@@ -470,16 +474,13 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
 
 				tMainViewPanel.removeAll();
-				AddReplyModifyForm tModifyForm = (AddReplyModifyForm)Registry.get("AddReply");
+				AddReplyModifyForm tModifyForm = new AddReplyModifyForm();//(AddReplyModifyForm)Registry.get("AddReply");
 				tModifyForm.initModifyDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
 				tMainViewPanel.add(tModifyForm);
 				tMainViewPanel.layout();
 			}
 		});
 
-		
-		
-		
 
 		deleteButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 			@Override

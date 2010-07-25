@@ -6,6 +6,7 @@ import java.util.Stack;
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.Style.Scroll;
+import com.extjs.gxt.ui.client.core.XTemplate;
 import com.extjs.gxt.ui.client.data.BaseTreeLoader;
 import com.extjs.gxt.ui.client.data.ModelKeyProvider;
 import com.extjs.gxt.ui.client.data.ModelStringProvider;
@@ -16,9 +17,12 @@ import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.event.MessageBoxEvent;
+import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
+import com.extjs.gxt.ui.client.event.SelectionChangedListener;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.event.TreePanelEvent;
 import com.extjs.gxt.ui.client.store.TreeStore;
+import com.extjs.gxt.ui.client.util.IconHelper;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
@@ -26,10 +30,12 @@ import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.TabItem;
 import com.extjs.gxt.ui.client.widget.TabPanel;
 import com.extjs.gxt.ui.client.widget.button.Button;
+import com.extjs.gxt.ui.client.widget.grid.RowExpander;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.menu.SeparatorMenuItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.extjs.gxt.ui.client.widget.treepanel.TreePanel;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -61,6 +67,7 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 	Button deleteSubject = new Button("Delete");
 
 	private TreeLoader<SubjectModel> loader;
+
 	
 	public void setToolBarVisible(boolean value) {
 		this.subjectsPanelToolbar.setVisible(value);
@@ -77,11 +84,15 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 		modifySubject.setEnabled(false);
 		deleteSubject.setEnabled(false);
 
+
+
+		
 		subjectsPanelToolbar.setVisible(false);
 		super.onRender(parent, index);  
 
 		mainPanel = Registry.get("maincontentpanel");
 
+		
 		setLayout(new FitLayout());
 
 
@@ -100,26 +111,47 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 		subjectsPanelToolbar.add(deleteSubject);
 
 		
+		((Button)Registry.get("RefreshRootSubjectsButton")).addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				loader.load(null);
+			}
+		});
+		
+		
 		addNewSubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
 				if (tree == null || tree.getSelectionModel() == null)
 					return;
 				
-				AddReplyModifyForm tAddSubjectForm = (AddReplyModifyForm)Registry.get("AddReply");
+				AddReplyModifyForm tAddSubjectForm = new AddReplyModifyForm();
+				// (AddReplyModifyForm)Registry.get("AddReply");
 				tAddSubjectForm.initAddSubjectDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
 				MainPanel.changeMainViewToPanel(tAddSubjectForm);
 			}
 		});
 
-
+		modifySubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				if (tree == null || tree.getSelectionModel() == null)
+					return;
+				
+				AddReplyModifyForm tModifySubjectForm = new AddReplyModifyForm();
+				tModifySubjectForm.initModifySubjectDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
+				MainPanel.changeMainViewToPanel(tModifySubjectForm);
+			}
+		});
+		
+		
 		addRootSubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
 				if (tree == null || tree.getSelectionModel() == null)
 					return;
 				
-				AddReplyModifyForm tAddSubjectForm = (AddReplyModifyForm)Registry.get("AddReply");
+				AddReplyModifyForm tAddSubjectForm = new AddReplyModifyForm();//)Registry.get("AddReply");
 				tAddSubjectForm.initAddSubjectDialog(null, tree, store);
 				MainPanel.changeMainViewToPanel(tAddSubjectForm);
 			}
@@ -223,22 +255,28 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 					@Override
 					public void onFailure(Throwable caught) {
-						tree.getStore().getLoader().load(null);
+						((Button)Registry.get("RefreshRootSubjectsButton")).setIcon(IconHelper.createStyle("subjectsRefresh"));
+						tree.getStore().getLoader().load();
 					}
 
 					@Override
 					public void onSuccess(List<SubjectModel> result) {
+						
 						callback.onSuccess(result);
+						((Button)Registry.get("RefreshRootSubjectsButton")).setIcon(IconHelper.createStyle("subjectsRefresh"));
+
 						//						System.out.println("pppppppppppppppppppppppppppppp");
-						if (loadConfig == null)
-							tree.getSelectionModel().select(0, false);
+//						if (loadConfig == null)
+//							tree.getSelectionModel().select(0, false);
 						//					if (store.getAllItems().size() > 0) {
 
 						//				}
 
 					}
 				};
-
+				
+				((Button)Registry.get("RefreshRootSubjectsButton")).setIcon(IconHelper.createStyle("subjectsLoading"));
+				
 				service.getSubjects((SubjectModel) loadConfig, tNewCallback);
 			} 
 		};  	
@@ -258,9 +296,12 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 		tree = new TreePanel<SubjectModel>(store);  
 
+		
+		
+		
 		Registry.register("SubjectsTree", tree);
 
-
+		
 		tree.setDisplayProperty("name");
 
 		tree.setStateful(true);  
@@ -393,13 +434,32 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 		tree.addListener(Events.OnMouseDown, tMouseListener);
 
 
+		tree.getSelectionModel().addSelectionChangedListener(new SelectionChangedListener<SubjectModel>() {
+			@Override
+			public void selectionChanged(SelectionChangedEvent<SubjectModel> se) {
+				if (se.getSelectedItem() == null) {
+						addNewSubject.setEnabled(false);
+						modifySubject.setEnabled(false);
+						deleteSubject.setEnabled(false);
+				}
+				else {
+					addNewSubject.setEnabled(true);
+					modifySubject.setEnabled(true);
+					deleteSubject.setEnabled(true);
+
+				}
+					
+			}
+		});
 
 		tree.setCaching(false);
 
 		tree.setBorders(true);  
 		//     tree.getStyle().setLeafIcon(IconHelper.createStyle("icon-page"));  
 
-		tree.setAutoSelect(true);
+		Registry.register("SubjectsTree", tree);
+		
+//		tree.setAutoSelect(true);
 		//		tree.setHeight(500);
 
 		tree.setTrackMouseOver(true);  

@@ -351,7 +351,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 			@Override
 			public void componentSelected(ButtonEvent ce) {
-				AddReplyModifyForm tOpenThread = (AddReplyModifyForm)Registry.get("AddReply");
+				AddReplyModifyForm tOpenThread = new AddReplyModifyForm();//(AddReplyModifyForm)Registry.get("AddReply");
 				System.out.println("Opens new threads under " + 
 						AsyncThreadsTableGrid.this.subjectID.getID());
 				tOpenThread.initThreadsOpenningDialog(AsyncThreadsTableGrid.this.subjectID, grid, 
