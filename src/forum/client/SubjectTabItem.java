@@ -11,6 +11,7 @@ import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.util.Margins;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.TabItem;
+import com.extjs.gxt.ui.client.widget.TabPanel;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
@@ -40,6 +41,9 @@ public class SubjectTabItem extends TabItem {
 		this.subject = subject;
 		this.setItemId(subject == null? "default" : subject.getID() + "");
 
+		if (subject == null)
+			Registry.register("defaulttab", this);
+		
 		this.setClosable(subject != null);
 
 		BorderLayoutData tSouthData = new BorderLayoutData(LayoutRegion.CENTER, 0, 0, Short.MAX_VALUE);
@@ -55,6 +59,7 @@ public class SubjectTabItem extends TabItem {
 		tNorthData.setCollapsible(true);
 		tNorthData.setFloatable(true);
 		tNorthData.setSplit(true);
+		
 		tNorthData.setMargins(new Margins(0));
 		tNorthData.setCollapsible(true);
 
@@ -81,6 +86,18 @@ public class SubjectTabItem extends TabItem {
 
 		this.add(messagesTree, tSouthData);
 
+		this.addListener(Events.Close, new Listener<BaseEvent>() {
+			@Override
+			public void handleEvent(BaseEvent be) {
+				
+				TabPanel tMainTabbedPanel = (TabPanel)Registry.get("maincontentpanel");
+				if (tMainTabbedPanel.getItems().size() == 0)
+					tMainTabbedPanel.add((TabItem) Registry.get("defaulttab"));
+
+				
+			}
+		});
+		
 		this.addListener(Events.Select, new Listener<BaseEvent>() {
 			@Override
 			public void handleEvent(BaseEvent be) {
@@ -122,8 +139,13 @@ public class SubjectTabItem extends TabItem {
 			this.messagesTree.setButtonsEnableStatus(QuadCoreForumWeb.CONNECTED_USER_DATA != null &&
 					QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST);
 		}
-		this.layout();
-		this.repaint();
+
+		threadsPanel.setSize(threadsPanel.getWidth(), threadsPanel.getHeight() + 1);
+		threadsPanel.setSize(threadsPanel.getWidth(), threadsPanel.getHeight() - 1);
+
+		messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() + 1);
+		messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() - 1);
+
 
 	}
 

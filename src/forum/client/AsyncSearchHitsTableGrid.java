@@ -45,6 +45,7 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 			String searchPhrase)
 	{
 		super();
+		configs = new ArrayList<ColumnConfig>();
 		this.searchType = type;
 		this.resultsPerPage = numOfPages;
 	}
@@ -66,6 +67,7 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		this.setLayout(new FitLayout());
 		
 		//TODO add listener here
+		loader.load(0, this.resultsPerPage);
 	}
 
 	private void initializeGrid() 

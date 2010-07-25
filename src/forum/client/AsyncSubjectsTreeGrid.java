@@ -64,6 +64,8 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 	
 	public void setToolBarVisible(boolean value) {
 		this.subjectsPanelToolbar.setVisible(value);
+		setSize(getWidth(), getHeight() + 1);
+		setSize(getWidth(), getHeight() - 1);
 		subjectsContentPanel.layout();
 		layout();
 		((ContentPanel)Registry.get("NavigatorPanel")).layout();
