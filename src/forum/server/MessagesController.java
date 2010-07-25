@@ -401,6 +401,7 @@ public class MessagesController {
 			forum.shared.exceptions.message.SubjectNotFoundException, 
 			NotRegisteredException
 	{
+		try {
 		SearchHit[] rawHits = null;
 		if (type.equals("author"))
 		{
@@ -429,24 +430,26 @@ public class MessagesController {
 			//TODO add new exception
 		}
 		
-		List<SearchHitModel> tSearchData = null;
 		int tStart = loadConfig.getOffset();
 		int limit = 0;
-		tSearchData = this.searchReturn(rawHits);
+		List<SearchHitModel> tSearchData = this.searchReturn(rawHits);
 		limit = tSearchData.size();
 		if (loadConfig.getLimit() > 0)
 			limit = Math.min(tStart + loadConfig.getLimit(), limit);  
 		
-		if (tSearchData == null)
-		{
-			System.out.println("fuck-it");
-		}
-		for (String prop : loadConfig.getPropertyNames())
-		{
-			System.out.println(prop);
+		List<SearchHitModel> tSearchHitsToReturn = new ArrayList<SearchHitModel>();
+
+		for (int i = loadConfig.getOffset(); i < limit; i++) {
+			tSearchHitsToReturn.add(tSearchData.get(i));
 		}
 		
-		return new BasePagingLoadResult<SearchHitModel>(tSearchData, loadConfig.getOffset(), tSearchData.size());
+		
+		return new BasePagingLoadResult<SearchHitModel>(tSearchHitsToReturn, loadConfig.getOffset(), tSearchData.size());
+		}
+		catch (NullPointerException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 	private List<SearchHitModel> searchReturn(SearchHit[] rawHits) 
