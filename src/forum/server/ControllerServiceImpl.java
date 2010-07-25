@@ -299,6 +299,11 @@ ControllerService {
 			forum.shared.exceptions.message.SubjectNotFoundException,
 			NotRegisteredException 
 	{
+		System.out.println("Entering searchByAuthor method:\n" +
+				"parameters are:\n" +
+				"1. " + loadConfig.toString() + "\n" +
+						"2. author\n" +
+						"3. " + userName);
 		return messagesController.search(loadConfig, "author", userName);
 	}
 
@@ -311,6 +316,11 @@ ControllerService {
 			forum.shared.exceptions.message.SubjectNotFoundException,
 			NotRegisteredException 
 	{
+		System.out.println("Entering searchByContent method:\n" +
+				"parameters are:\n" +
+				"1. " + loadConfig.toString() + "\n" +
+						"2. content\n" +
+						"3. " + cont);
 		return messagesController.search(loadConfig, "content", cont);
 	}
 
