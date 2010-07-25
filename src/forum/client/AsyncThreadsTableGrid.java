@@ -124,24 +124,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				if (subjectID == null || subjectID.getID() == -1)
 					return;
 
-				System.out.println("'''''''''''''''''''''''''''''''''' " + Registry.get("NoTabExpand"));
-				if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") > 0)) {
-					System.out.println("enters and exits");
-					Registry.register("NoTabExpand", ((Long)Registry.get("NoTabExpand") - 1));
-					store.commitChanges();
-					//					grid.el().unmask();
-					//					statusBar.setEnabled(true);
-					QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-					return;
-				}
-				else if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") == 0)) {
-					Registry.register("NoTabExpand", null);
-					store.commitChanges();
-					//					grid.el().unmask();
-					//					statusBar.setEnabled(true);
-					QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-					return;
-				}
 
 				QuadCoreForumWeb.WORKING_STATUS.setBusy("Loading threads...");
 				service.getThreads((PagingLoadConfig) loadConfig, subjectID.getID(), new AsyncCallback<PagingLoadResult<ThreadModel>>() {
@@ -174,7 +156,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 //							statusBar.setEnabled(true);
 							// select the first row
 //							store.commitChanges();
-//							grid.getSelectionModel().select(0, false);
+							grid.getSelectionModel().select(0, false);
 						}
 							//				grid.el().unmask();
 					//					statusBar.setEnabled(true);
@@ -210,8 +192,25 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		System.out.println(this.loader);
 		System.out.println((this.grid == null) + " dddddddddddddddddd");
 		System.out.println("111111111111111111111111111111111111 " + proxy);
+		System.out.println("'''''''''''''''''''''''''''''''''' " + Registry.get("NoTabExpand"));
+		
+		if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") > 0)) {
+			System.out.println("enters and exits");
+			Registry.register("NoTabExpand", ((Long)Registry.get("NoTabExpand") - 1));
+			//					statusBar.setEnabled(true);
+			QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+			return;
+		}
+		else if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") == 0)) {
+			Registry.register("NoTabExpand", null);
+
+			//					statusBar.setEnabled(true);
+			QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+			return;
+		}
+
 		if (this.subjectID != null && this.subjectID.getID() != -1)
-			this.loader.load(0, 9);
+			this.loader.load(0, 10);
 	}
 
 
@@ -294,7 +293,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	private void initializeStatusbar() {
 		statusBar  = new PagingToolBar(10);
 		statusBar.setPageSize(10);
-		statusBar.setEnabled(true);
+		statusBar.setEnabled(subjectID != null && subjectID.getID() != -1);
 		statusBar.bind(loader);
 //		statusBar.setEnabled(false);
 	}
@@ -514,13 +513,13 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 		grid.addListener(Events.RowClick, tRowSelectionListener);
 
-
+/*
 		grid.addListener(Events.Attach, new Listener<GridEvent<ThreadModel>>() {  
 			public void handleEvent(GridEvent<ThreadModel> be) {  
 				if (subjectID != null && subjectID.getID() != -1) {
 					PagingLoadConfig config = new BasePagingLoadConfig();  
 					config.setOffset(0);  
-					config.setLimit(9);  
+					config.setLimit(10);
 
 					Map<String, Object> state = grid.getState();  
 					if (state.containsKey("offset")) {  
@@ -534,7 +533,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				}
 			}  
 		});  
-
+*/
 
 
 

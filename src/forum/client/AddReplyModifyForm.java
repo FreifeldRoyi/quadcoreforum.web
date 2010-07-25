@@ -9,6 +9,7 @@ import com.extjs.gxt.ui.client.Style.Scroll;
 import com.extjs.gxt.ui.client.core.XTemplate;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
+import com.extjs.gxt.ui.client.event.KeyListener;
 import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.event.MessageBoxEvent;
 import com.extjs.gxt.ui.client.event.SelectionListener;
@@ -87,6 +88,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 		titleOrNameField.setAutoValidate(true);
 		topicField.setAutoValidate(true);
 
+		
 		addSubjectListener = new SelectionListener<ButtonEvent>() {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
@@ -223,7 +225,7 @@ public class AddReplyModifyForm extends LayoutContainer {
 						QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
 						messageModel.getID(), 
 						titleOrNameField.getValue(), 
-						contentOrDescriptionField.getValue(),
+						trim(contentOrDescriptionField.getValue()),
 						new AsyncCallback<MessageModel>() {
 
 							@Override
@@ -300,14 +302,14 @@ public class AddReplyModifyForm extends LayoutContainer {
 
 	}
 
-
-	private String getMaxThreeLinesDescription(String htmlContent) {
+	private String trim(String htmlContent) {
+		System.out.println("beforrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr " + htmlContent);
 		boolean cont = false;
 		do {
 			if (htmlContent.startsWith("<br>")) {
 				htmlContent = htmlContent.substring(4);
 				cont = true;
-			} 
+			}
 			else if (htmlContent.startsWith("&nbsp;")) {
 				htmlContent = htmlContent.substring(6);
 				cont = true;
@@ -330,9 +332,17 @@ public class AddReplyModifyForm extends LayoutContainer {
 				cont = false;
 		}
 		while (cont);
-		
-		System.out.println("HTML = " + htmlContent);
+		if (htmlContent.startsWith("?"))
+			htmlContent = htmlContent.substring(1);
+		if (htmlContent.endsWith("?"))
+			htmlContent = htmlContent.substring(0, htmlContent.length() - 1);
+			
+		System.out.println("trimmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmed " + htmlContent);
+		return htmlContent;
+	}
 
+	private String getMaxThreeLinesDescription(String htmlContent) {
+		htmlContent = this.trim(htmlContent);
 		if (htmlContent.split("<br>").length > 3)
 			return null;
 		else

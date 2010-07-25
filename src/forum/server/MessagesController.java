@@ -396,7 +396,7 @@ public class MessagesController {
 			forum.shared.exceptions.message.ThreadNotFoundException, 
 			forum.shared.exceptions.message.SubjectNotFoundException, 
 			NotRegisteredException
-	{	
+	{
 		SearchHit[] rawHits = null;
 		if (type.equals("author"))
 		{

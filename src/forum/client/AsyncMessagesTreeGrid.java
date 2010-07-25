@@ -261,7 +261,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 			public void handleEvent(final TreeGridEvent<MessageModel> be) {  
 
 				if (be.getModel() != null) {
-					invokeListenerOperation(be.getModel());
+					invokeExpansionOperation(be.getModel());
 				}
 				else
 					setGuestView();
@@ -283,7 +283,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 			@Override
 			public void selectionChanged(SelectionChangedEvent<MessageModel> se) {
 				if (se.getSelectedItem() != null) {
-					invokeListenerOperation(se.getSelectedItem());
+					invokeSelectListenerOperation(se.getSelectedItem());
 				}
 				else
 					setGuestView();
@@ -318,7 +318,39 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 	}
 
-	private void invokeListenerOperation(final MessageModel model) {
+	
+	
+	
+	
+	private void invokeSelectListenerOperation(final MessageModel model) {
+		service.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
+
+			@Override
+			public void onFailure(Throwable caught) { /* do nothing - the expand listener will delete the row */ }
+
+			@Override
+			public void onSuccess(MessageModel result) {
+				model.setTitle(result.getTitle());
+				model.setContent(result.getContent());
+				model.setDate(result.getDate());
+				store.update(model);
+				store.commitChanges();
+
+				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
+
+				if (tSelected != null) {
+					com.google.gwt.dom.client.Element tRow = tree.getTreeView().getRow(tSelected);
+					if (tRow != null)
+						expander.expandRow(tree.getView().findRowIndex(tRow));
+					allowReplyModifyDeleteButtons(tSelected);
+					
+				}
+			}
+		});
+	}
+
+	
+	private void invokeExpansionOperation(final MessageModel model) {
 		service.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
 
 			@Override
@@ -337,31 +369,34 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 				System.out.println("pppppppppppppppppppppppppppppppppppp");
 				store.commitChanges();
-				/*							if (shouldExpandZeroRow > 0) {
-					shouldExpandZeroRow--;
-					expander.expandRow(0);
-				}
-				 */
-
 				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
 
-				if (tSelected != null) {
-					/*
-
+/*				if (tSelected != null) {
 					com.google.gwt.dom.client.Element tRow = tree.getTreeView().getRow(tSelected);
 					if (tRow != null)
 						expander.expandRow(tree.getView().findRowIndex(tRow));
-						*/
 					allowReplyModifyDeleteButtons(tSelected);
 					
 				}
+									*/
+
 			}
 		});
 	}
 
+	
 	public void setToolBarVisible(boolean value) {
 		this.toolbar.setVisible(value);
 		this.messagesPanel.layout();
+
+		messagesPanel.fireEvent(Events.Resize);
+		tree.fireEvent(Events.Resize);
+		fireEvent(Events.Resize);
+/*		messagesPanel.add(tree);
+		setScrollMode(Scroll.AUTOY);
+		add(messagesPanel);  
+*/
+		
 	}
 
 	public void setGuestView() {

@@ -194,7 +194,7 @@ public class MainPanel extends LayoutContainer
 		ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
 		tMainViewPanel.removeAll();
 		System.out.println("pppppppppppppppppppppppppppoooooooooooooooooooo09000000000000000000000000000000000");
-		Registry.register("NoTabExpand", 2L);
+		Registry.register("NoTabExpand", 1L);
 		tMainViewPanel.add((TabPanel)Registry.get("maincontentpanel"));
 		tMainViewPanel.layout();
 	}
