@@ -105,6 +105,7 @@ public class SearchPanel extends LayoutContainer
 	private void openSearchHitsTable()
 	{
 		String toSearch = this.txtSearch.getValue();
+		System.out.println("preparing for search. search phrase entered is: " + toSearch);
 		int resultsPerPage = getResultsPerPagesValue();
 		AsyncSearchHitsTableGrid table = 
 			new AsyncSearchHitsTableGrid(resultsPerPage, this.getSearchType(), toSearch);
