@@ -23,6 +23,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import forum.shared.SearchHitModel;
+import forum.shared.exceptions.user.NotRegisteredException;
 
 public class AsyncSearchHitsTableGrid extends LayoutContainer 
 {
