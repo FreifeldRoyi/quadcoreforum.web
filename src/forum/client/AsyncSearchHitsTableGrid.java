@@ -156,11 +156,13 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 									System.out.println("result.getTotalLength() = " + result.getTotalLength());
 									if(result.getTotalLength() == 0)
 									{
+										System.out.println("AsyncSearchHitsTable - line 159. result.getTotalLength() == 0");
 										hitsPager.setEnabled(false);
 										//TODO
 									}
 									else
 									{
+										System.out.println("AsyncSearchHitsTable - line 165. result.getTotalLength() != 0");
 										hitsPager.setEnabled(true);
 										store.commitChanges();
 										grid.getSelectionModel().select(0, false);
@@ -170,6 +172,7 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 				}
 				else if (searchType.equals("content"))
 				{
+					System.out.println("Search by content");
 					service.searchByContent((PagingLoadConfig)loadConfig, searchPhrase, 
 							new AsyncCallback<PagingLoadResult<SearchHitModel>>()
 							{
@@ -201,6 +204,13 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 									}
 								}
 							});
+				}
+				else //search type unknown
+				{
+					System.out.println("Type '" + searchType +  "' is unknown");
+					grid.el().unmask();
+					hitsPager.setEnabled(false);
+					return;
 				}
 			}
 		};
