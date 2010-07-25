@@ -82,6 +82,20 @@ public class MessagesController {
 		}
 	}
 
+	public ThreadModel getThreadByID(long threadID, boolean shouldUpdateViews) throws forum.shared.exceptions.message.ThreadNotFoundException, 
+	forum.shared.exceptions.database.DatabaseRetrievalException {
+		try {
+			return threadToThreadModelConvertor(facade.getThreadByID(threadID, shouldUpdateViews));
+		}
+		catch (ThreadNotFoundException e) {
+			throw new forum.shared.exceptions.message.ThreadNotFoundException(e.getThreadID());
+		}
+		catch (DatabaseRetrievalException e) {
+			System.out.println("ddddddddddddddddddddddddd");
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+	}
+	
 	public void deleteSubject(long userID, final long fatherID, 
 			long subjectID) throws forum.shared.exceptions.message.SubjectNotFoundException,
 			NotRegisteredException, forum.shared.exceptions.user.NotPermittedException,
@@ -291,7 +305,6 @@ public class MessagesController {
 			Collection<UIThread> tThreads = facade.getThreads(fatherID);
 			List<ThreadModel> tData = new ArrayList<ThreadModel>();
 
-
 			int tStart = loadConfig.getOffset();  
 			int limit = tThreads.size();  
 			if (loadConfig.getLimit() > 0)
@@ -352,7 +365,6 @@ public class MessagesController {
 				toReturn.add(this.getMessageByID(threadID));
 			else {
 				Collection<UIMessage> tRetrievedMessages = facade.getReplies(father.getID(), shouldUpdateViews);
-
 				if (tRetrievedMessages.isEmpty()) {
 					return toReturn;
 				}

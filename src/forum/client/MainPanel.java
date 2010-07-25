@@ -2,7 +2,6 @@ package forum.client;
 
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.LayoutRegion;
-import com.extjs.gxt.ui.client.Style.Scroll;
 import com.extjs.gxt.ui.client.util.Margins;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
@@ -13,7 +12,7 @@ import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.google.gwt.user.client.Element;
 
-import forum.shared.ConnectedUserData.UserType;
+import forum.shared.UserModel.UserType;
 
 public class MainPanel extends LayoutContainer
 { 
@@ -54,6 +53,7 @@ public class MainPanel extends LayoutContainer
 		Registry.register("MainViewPanel", mainPanel);
 		Registry.register("maincontentpanel", mainContentPanel);
 		Registry.register("AddReply", tAddReplyForm);
+		Registry.register("NavigatorPanel", navigatorPanel);
 		
 		
 		mainPanel.setLayout(new FitLayout());
@@ -142,7 +142,6 @@ public class MainPanel extends LayoutContainer
 		navigatorPanel.setHeading("Navigation");  
 		navigatorPanel.setBorders(false);
 		navigatorPanel.setBodyStyle("fontSize: 12px; padding: 0px");  
-		navigatorPanel.setScrollMode(Scroll.AUTOY);
 		navigatorPanel.setCollapsible(false);
 
 		navigatorPanel.setLayout(new FitLayout());		navigatorPanel.add(subjectsGrid);
@@ -182,5 +181,21 @@ public class MainPanel extends LayoutContainer
 			SubjectTabItem tSubjectTab = (SubjectTabItem)tItem;
 			tSubjectTab.changeToolBarVisible();
 		}
+	}
+	
+	public static void changeMainViewToPanel(LayoutContainer container) {
+		ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
+		tMainViewPanel.removeAll();
+		tMainViewPanel.add(container);
+		tMainViewPanel.layout();
+	}
+	
+	public static void changeMainViewToSubjectsAndThreads() {
+		ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
+		tMainViewPanel.removeAll();
+		System.out.println("pppppppppppppppppppppppppppoooooooooooooooooooo09000000000000000000000000000000000");
+		Registry.register("NoTabExpand", 2L);
+		tMainViewPanel.add((TabPanel)Registry.get("maincontentpanel"));
+		tMainViewPanel.layout();
 	}
 }

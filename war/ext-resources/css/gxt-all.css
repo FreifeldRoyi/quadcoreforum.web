@@ -2638,7 +2638,7 @@ a.x-grid3-hd-btn:hover {
 }
 
 .x-grid3-body .x-grid3-td-row-icon {
-  background: transparent repeat-y right;
+  background: red repeat-y right;
   vertical-align: top;
   text-align: center;
 }
@@ -2655,7 +2655,7 @@ a.x-grid3-hd-btn:hover {
 
 .x-grid3-body .x-grid3-row-selected .x-grid3-td-numberer,.x-grid3-body .x-grid3-row-selected .x-grid3-td-checker,.x-grid3-body .x-grid3-row-selected .x-grid3-td-expander
   {
-  background: transparent repeat-y right;
+  background: red repeat-y right;
 }
 
 .x-grid3-body .x-grid3-check-col-td .x-grid3-cell-inner {
@@ -3063,7 +3063,7 @@ a.x-grid3-hd-btn:hover {
 }
 
 .x-ftree-selected .x-ftree-text {
-	background-color: #d9e8fb;
+	background-color: #fffff;
 }
 
 .x-ftree-node-over .x-ftree-text {
@@ -3134,7 +3134,7 @@ a.x-grid3-hd-btn:hover {
 }
 
 .x-ftree2-selected {
-	background-color: #d9e8fb !important;
+	background-color: #ffffff !important;
 }
 
 .x-ftree2-node-over {
@@ -5680,7 +5680,7 @@ body.ext-ie6.x-body-masked .x-window select {
 
 .my-treetbl-sel .my-treetbl-check,.my-treetbl-sel .my-treetbl-icon,.my-treetbl-sel .my-treetbl-item-text
   {
-  background: url(../images/gxt/shared/select-19-bg.gif) left -38px;
+  background: red;
 }
 
 .my-treetbl-close {
@@ -5811,14 +5811,14 @@ body.ext-ie6.x-body-masked .x-window select {
 .my-treetbl-item-over {
   border-top: 1px solid #dddddd;
   border-bottom: 1px solid #dddddd;
-  background: #efefef url(../images/default/grid/row-over.gif) repeat-x left top;
+  background: #75A3D1 url(../images/default/grid/row-over.gif) repeat-x left top;
 }
 
 .my-treetbl-item-sel {
   background-image: none;
-  background-color: #D9E1ED;
-  border-top: 1px dotted #9EB8ED;
-  border-bottom: 1px dotted #9EB8ED;
+  background-color: red;
+  border-top: 2px dotted #000000;
+  border-bottom: 2px dotted #000000;
 }
 
 .my-treetbl .x-grid3-td-numberer {
@@ -5842,7 +5842,7 @@ body.ext-ie6.x-body-masked .x-window select {
 }
 
 .my-treetbl-item-sel .x-grid3-td-numberer {
-  background: transparent url(../images/gxt/tree/tree-table-special-col-sel.gif) repeat-y
+  background: #000000 url(../images/gxt/tree/tree-table-special-col-sel.gif) repeat-y
     scroll left center;
 }.ext-el-mask {
     background-color: #ccc;
@@ -6361,11 +6361,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.sort-as
 }
 .x-grid3-row-selected {
     background-image: none !important;
-	background-color: #dfe8f6 !important;
+	background-color: #ffffff !important;
 	border-color:#a3bae9;
 }
 .x-grid3-cell-selected{
-	background-color: #b8cfee !important;
+	background-color: #ffffff !important;
 	color:#000;
 }
 .x-grid3-cell-selected span{
@@ -6375,7 +6375,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.sort-as
 	color:#000;
 }
 .x-grid3-locked td.x-grid3-row-marker, .x-grid3-locked .x-grid3-row-selected td.x-grid3-row-marker{
-    background-color:#ebeadb !important;
+    background-color:#ffffff !important;
     background-image:url(../images/default/grid/grid-hrow.gif) !important;
     color:#000;
     border-top-color:#fff;
@@ -6483,11 +6483,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.sort-as
     border-top-color:#ededed;
 }
 .x-grid-with-col-lines .x-grid3-row-selected {
-	border-top-color:#a3bae9;
+	border-top-color:#ffffff;
 }
 
 .x-grid3-check-col-disabled {
-    background-color:transparent;
+    background-color:#3366FF;
 	background-image:url(../images/gxt/menu/disabledcheck.gif);
 }
 

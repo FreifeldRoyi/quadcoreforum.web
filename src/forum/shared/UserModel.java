@@ -12,7 +12,7 @@ import forum.shared.Permission;
  * @author sepetnit
  *
  */
-public class ConnectedUserData implements Serializable {
+public class UserModel implements Serializable {
 
 	private static final long serialVersionUID = 8075093857428645727L;
 
@@ -28,9 +28,9 @@ public class ConnectedUserData implements Serializable {
 	private String email;
 	private UserType type;
 
-	public ConnectedUserData() { }
+	public UserModel() { }
 	
-	public ConnectedUserData(long userID, String username, String lastName, String firstName, String email,
+	public UserModel(long userID, String username, String lastName, String firstName, String email,
 			String type, Collection<Permission> permissions) {
 		this.userID = userID;
 		this.username = username;
@@ -41,7 +41,7 @@ public class ConnectedUserData implements Serializable {
 		this.type = UserType.valueOf(type);
 	}
 	
-	public ConnectedUserData(long userID, Collection<Permission> permissions) {
+	public UserModel(long userID, Collection<Permission> permissions) {
 		this(userID, null, null, null,  null, "GUEST", permissions);
 	}
 

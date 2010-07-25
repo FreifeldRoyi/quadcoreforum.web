@@ -27,6 +27,7 @@ import com.extjs.gxt.ui.client.widget.TabItem;
 import com.extjs.gxt.ui.client.widget.TabPanel;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
+import com.extjs.gxt.ui.client.widget.menu.SeparatorMenuItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.extjs.gxt.ui.client.widget.treepanel.TreePanel;
 import com.google.gwt.user.client.Element;
@@ -34,7 +35,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import forum.shared.SubjectModel;
 import forum.shared.exceptions.database.DatabaseUpdateException;
-import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.exceptions.message.SubjectNotFoundException;
 import forum.shared.exceptions.user.NotPermittedException;
 import forum.shared.exceptions.user.NotRegisteredException;
@@ -52,24 +52,30 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 	private ToolBar subjectsPanelToolbar = new ToolBar();
 
 	ContentPanel subjectsContentPanel = new ContentPanel();  
+	Button addRootSubject = new Button("Add root");
+
 	Button addNewSubject = new Button("Add new");
+	
 	Button modifySubject = new Button("Modify");
 
 	Button deleteSubject = new Button("Delete");
 
 	private TreeLoader<SubjectModel> loader;
 	
-	
-	
-	
-	
-	
 	public void setToolBarVisible(boolean value) {
 		this.subjectsPanelToolbar.setVisible(value);
+		subjectsContentPanel.layout();
+		layout();
+		((ContentPanel)Registry.get("NavigatorPanel")).layout();
 	}
 	
 	@Override  
 	protected void onRender(Element parent, int index) {
+		addNewSubject.setEnabled(false);
+		modifySubject.setEnabled(false);
+		deleteSubject.setEnabled(false);
+
+		subjectsPanelToolbar.setVisible(false);
 		super.onRender(parent, index);  
 
 		mainPanel = Registry.get("maincontentpanel");
@@ -85,36 +91,37 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 		subjectsContentPanel.setLayout(new FitLayout());
 
+		subjectsPanelToolbar.add(addRootSubject);
+		subjectsPanelToolbar.add(new SeparatorMenuItem());
 		subjectsPanelToolbar.add(addNewSubject);
 		subjectsPanelToolbar.add(modifySubject);
 		subjectsPanelToolbar.add(deleteSubject);
 
-		subjectsContentPanel.setTopComponent(subjectsPanelToolbar);
-		subjectsContentPanel.setLayout(new FitLayout());
 		
 		addNewSubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
 				if (tree == null || tree.getSelectionModel() == null)
 					return;
-				SubjectModel tSelected = tree.getSelectionModel().getSelectedItem();
-				if (tSelected == null) {
-					addNewSubject.setEnabled(false);
-					return;
-				}
-				else {
-					ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
-
-					tMainViewPanel.removeAll();
-					AddReplyModifyForm tAddSubjectForm = (AddReplyModifyForm)Registry.get("AddReply");
-					tAddSubjectForm.initAddSubjectDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
-					tMainViewPanel.add(tAddSubjectForm);
-					tMainViewPanel.layout();	
-				}
 				
+				AddReplyModifyForm tAddSubjectForm = (AddReplyModifyForm)Registry.get("AddReply");
+				tAddSubjectForm.initAddSubjectDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
+				MainPanel.changeMainViewToPanel(tAddSubjectForm);
 			}
 		});
 
+
+		addRootSubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				if (tree == null || tree.getSelectionModel() == null)
+					return;
+				
+				AddReplyModifyForm tAddSubjectForm = (AddReplyModifyForm)Registry.get("AddReply");
+				tAddSubjectForm.initAddSubjectDialog(null, tree, store);
+				MainPanel.changeMainViewToPanel(tAddSubjectForm);
+			}
+		});
 		
 		deleteSubject.addSelectionListener(new SelectionListener<ButtonEvent>() {
 
@@ -249,11 +256,10 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 		tree = new TreePanel<SubjectModel>(store);  
 
-
+		Registry.register("SubjectsTree", tree);
 
 
 		tree.setDisplayProperty("name");
-
 
 		tree.setStateful(true);  
 
@@ -276,12 +282,18 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 		Listener<TreePanelEvent<SubjectModel>> tUpdateListener = new Listener<TreePanelEvent<SubjectModel>>() {  
 			public void handleEvent(TreePanelEvent<SubjectModel> be) {  
 				if (be.getItem() != null) {
+					QuadCoreForumWeb.WORKING_STATUS.setBusy("Retrieving subjects...");
+
 					final SubjectModel toUpdate = be.getItem();
 					//					tree.getSelectionModel().select(toUpdate, false);
 
 					service.getSubjectByID(be.getItem().getID(), new AsyncCallback<SubjectModel>() {
 						@Override
-						public void onFailure(Throwable caught) { /* do nothing - the expand listener will delete the row */ }
+						public void onFailure(Throwable caught) {
+							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+
+							/* do nothing - the expand listener will delete the row */ 
+							}
 
 						@Override
 						public void onSuccess(SubjectModel result) {
@@ -295,8 +307,7 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 								(SubjectTabItem)mainPanel.getItemByItemId(toUpdate.getID() + "");
 							if (tTabItem != null)
 								tTabItem.updateTabTitle();
-							
-							System.out.println("apapapapappapappapapapapapapapp");
+							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 						}
 					});
 
@@ -310,8 +321,15 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 			@Override
 			public void handleEvent(BaseEvent be) {
 				SubjectModel tSelected = tree.getSelectionModel().getSelectedItem();
+				
+				System.out.println("opennnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
+				
 				if (tSelected != null) {
+					QuadCoreForumWeb.WORKING_STATUS.setBusy("Retrieving subjects...");
 
+					modifySubject.setEnabled(true);
+					deleteSubject.setEnabled(true);
+					addNewSubject.setEnabled(true);
 
 					TabItem tDefault = mainPanel.getItemByItemId("default");
 					if (tDefault != null)
@@ -322,12 +340,13 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 					while (tSelected  != null) {
 						if ((tCurrentItem = mainPanel.getItemByItemId(tSelected.getID() + "")) == null) {
-							TabItem tNewItem = new SubjectTabItem(tSelected);
+							final TabItem tNewItem = new SubjectTabItem(tSelected);
 							tNewItem.addListener(Events.Select, new Listener<BaseEvent>() {
 
 								@Override
 								public void handleEvent(BaseEvent be) {
-									// TODO Auto-generated method stub
+									System.out.println("SubjectTabItem.this " + ((SubjectTabItem)tNewItem).getSubject().getID());
+										
 									
 								}
 							});
@@ -344,11 +363,20 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 						tCurrentItem = tStack.pop();
 						mainPanel.add(tCurrentItem);
 					}
+
+					
 					
 						mainPanel.setSelection(tCurrentItem);
 
+						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					
 				}
+				else {
+					addNewSubject.setEnabled(false);
+					modifySubject.setEnabled(false);
+					deleteSubject.setEnabled(false);
+				}
+ 					
 			}
 		};
 
@@ -376,8 +404,12 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 		subjectsContentPanel.setScrollMode(Scroll.AUTOY);
 
+		subjectsContentPanel.setTopComponent(subjectsPanelToolbar);
 
 		subjectsContentPanel.add(tree);
+		subjectsContentPanel.setLayout(new FitLayout());
+		subjectsContentPanel.layout();
+		layout();
 		add(subjectsContentPanel);  
 
 	}

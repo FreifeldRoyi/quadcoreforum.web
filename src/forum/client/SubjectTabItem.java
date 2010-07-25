@@ -3,6 +3,7 @@
  */
 package forum.client;
 
+import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.LayoutRegion;
 import com.extjs.gxt.ui.client.event.BaseEvent;
 import com.extjs.gxt.ui.client.event.Events;
@@ -15,7 +16,7 @@ import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 
 import forum.shared.SubjectModel;
-import forum.shared.ConnectedUserData.UserType;
+import forum.shared.UserModel.UserType;
 
 /**
  * @author sepetnit
@@ -39,7 +40,7 @@ public class SubjectTabItem extends TabItem {
 		this.subject = subject;
 		this.setItemId(subject == null? "default" : subject.getID() + "");
 
-		this.setClosable(true);
+		this.setClosable(subject != null);
 
 		BorderLayoutData tSouthData = new BorderLayoutData(LayoutRegion.CENTER, 0, 0, Short.MAX_VALUE);
 		tSouthData.setCollapsible(false);
@@ -83,8 +84,25 @@ public class SubjectTabItem extends TabItem {
 		this.addListener(Events.Select, new Listener<BaseEvent>() {
 			@Override
 			public void handleEvent(BaseEvent be) {
-				if (SubjectTabItem.this.subject != null)
-					loadThreads();
+
+					System.out.println("Tab selected................................................................................");
+					if (SubjectTabItem.this.subject != null) {
+/*
+						System.out.println("'''''''''''''''''''''''''''''''''' " + Registry.get("NoTabExpand"));
+						if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") > 0)) {
+							System.out.println("enters and exits");
+							Registry.register("NoTabExpand", ((Long)Registry.get("NoTabExpand") - 1));
+							return;
+						}
+						else if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") == 0)) {
+							Registry.register("NoTabExpand", null);
+							return;
+						}
+						*/
+						threadsTable.load(); // changing
+						
+						
+					}
 			}
 		});
 	}
@@ -96,7 +114,7 @@ public class SubjectTabItem extends TabItem {
 		this.messagesTree.setToolBarVisible(QuadCoreForumWeb.CONNECTED_USER_DATA != null &&
 				QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST);
 
-		
+
 		if (this.getItemId().equals("default")) {
 			this.messagesTree.setButtonsEnableStatus(false);
 		}
@@ -109,12 +127,16 @@ public class SubjectTabItem extends TabItem {
 
 	}
 
-	public void loadThreads() {
-		this.threadsTable.load();
-	}
+//	public void loadThreads() {
+	//	this.threadsTable.load();
+	//}
 
 	public AsyncThreadsTableGrid getThreadsTable() {
 		return this.threadsTable;
+	}
+
+	public SubjectModel getSubject() {
+		return this.subject;
 	}
 
 	public void updateTabTitle() {

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -14,16 +13,16 @@ import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.MainForumLogic;
 import forum.server.domainlayer.interfaces.UIMember;
 import forum.shared.ActiveConnectedData;
-import forum.shared.ConnectedUserData;
 import forum.shared.MessageModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
+import forum.shared.UserModel;
 import forum.shared.exceptions.database.DatabaseRetrievalException;
+import forum.shared.exceptions.database.DatabaseUpdateException;
 import forum.shared.exceptions.message.MessageNotFoundException;
+import forum.shared.exceptions.user.MemberAlreadyExistsException;
 import forum.shared.exceptions.user.NotRegisteredException;
 import forum.shared.exceptions.user.WrongPasswordException;
-import forum.shared.tcpcommunicationlayer.RegisterMessage;
-import forum.shared.tcpcommunicationlayer.ServerResponse;
 
 @SuppressWarnings("serial")
 public class ControllerServiceImpl extends RemoteServiceServlet implements
@@ -73,7 +72,7 @@ ControllerService {
 	 */	
 
 
-	public ConnectedUserData login(long guestID, String username, String password) throws 
+	public UserModel login(long guestID, String username, String password) throws 
 	NotRegisteredException, WrongPasswordException, DatabaseRetrievalException {
 		return this.usersController.login(guestID, username, password);
 	}
@@ -271,18 +270,19 @@ ControllerService {
 		this.usersController.disconnectClient(clientID);
 	}
 
-	public ConnectedUserData logout(String username) throws 
+	public UserModel logout(String username) throws 
 	forum.shared.exceptions.user.NotConnectedException,
 	forum.shared.exceptions.database.DatabaseUpdateException {
 		return usersController.logout(username);
 	}
 
-	public ServerResponse addNewGuest() throws forum.shared.exceptions.database.DatabaseUpdateException {
+	public UserModel addNewGuest() throws forum.shared.exceptions.database.DatabaseUpdateException {
 		return usersController.addNewGuest();
 	}
 
-	public ServerResponse registerToForum(RegisterMessage data) {
-		return usersController.registerToForum(data);
+	public void registerToForum(final String username, final String password, final String lastName, 
+			final String firstName, final String email) throws MemberAlreadyExistsException, DatabaseUpdateException {
+		usersController.registerToForum(username, password, lastName, firstName, email);
 	}
 
 	@Override
@@ -324,4 +324,11 @@ ControllerService {
 		return null;
 	}
 
+	public ThreadModel getThreadByID(long threadID, boolean shouldUpdateViews) throws forum.shared.exceptions.message.ThreadNotFoundException, 
+	forum.shared.exceptions.database.DatabaseRetrievalException {
+		return this.messagesController.getThreadByID(threadID, shouldUpdateViews);
+	}
+
+	
+	
 }

@@ -12,11 +12,11 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	private static final long serialVersionUID = 3965074362252069771L;
 
 	public SubjectModel() {
-		setId(-1);
+		setID(-1);
 	}
 	
 	public SubjectModel(long id, String name, String description, long subjectsNum, long messagesNum) {
-		setId(id);
+		setID(id);
 		setName(name);
 		setDescription(description);
 		setSubjectsNumber(subjectsNum);
@@ -52,7 +52,7 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	/**
 	 * @param id the id to set
 	 */
-	public void setId(long id) {
+	public void setID(long id) {
 		set("id", id);
 	}
 

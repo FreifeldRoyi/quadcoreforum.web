@@ -42,7 +42,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import forum.shared.MessageModel;
-import forum.shared.ConnectedUserData.UserType;
+import forum.shared.UserModel.UserType;
 import forum.shared.exceptions.database.DatabaseUpdateException;
 import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.exceptions.user.NotPermittedException;
@@ -133,6 +133,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 					@Override
 					public void onFailure(Throwable caught) {
 						tree.getStore().getLoader().load(null);
+						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 
 					@Override
@@ -143,11 +144,15 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 						}
 						else if (result.size() == 0)
 							setGuestView();
+						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 				};
 
-				if (threadID != -1)
+				if (threadID != -1) {
+					QuadCoreForumWeb.WORKING_STATUS.setBusy("Loading messages...");
 					service.getReplies(threadID, (MessageModel) loadConfig, selectionChanged, tNewCallback);
+				}
+				
 			} 
 		};  	
 
@@ -237,6 +242,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 		tree.setStateful(true);  
 
+		tree.setLoadMask(true);
 
 		tree.setId("messagestable");  
 
@@ -305,6 +311,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 		messagesPanel.setScrollMode(Scroll.AUTOY);
 
 		messagesPanel.add(tree);
+		setScrollMode(Scroll.AUTOY);
 		add(messagesPanel);  
 
 		initializeToolbar();
@@ -416,6 +423,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				tAddReply.initReplyDialog(tree.getSelectionModel().getSelectedItem(), tree, store);
 				tMainViewPanel.add(tAddReply);
 				tMainViewPanel.layout();
+				tree.setExpanded(tree.getSelectionModel().getSelectedItem(), true);
 			}
 		});
 
