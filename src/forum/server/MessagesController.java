@@ -5,6 +5,7 @@ package forum.server;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,12 +18,14 @@ import forum.server.domainlayer.interfaces.UIMessage;
 import forum.server.domainlayer.interfaces.UISubject;
 import forum.server.domainlayer.interfaces.UIThread;
 import forum.server.domainlayer.message.NotPermittedException;
+import forum.server.domainlayer.search.SearchHit;
 import forum.server.updatedpersistentlayer.DatabaseRetrievalException;
 import forum.server.updatedpersistentlayer.DatabaseUpdateException;
 import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
 import forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException;
 import forum.shared.MessageModel;
 import forum.shared.Permission;
+import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.exceptions.message.MessageNotFoundException;
@@ -384,6 +387,128 @@ public class MessagesController {
 		catch (DatabaseRetrievalException e) {
 			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 		}
+	}
+	
+	public PagingLoadResult<SearchHitModel> search(PagingLoadConfig loadConfig, 
+			String type, String searchPhrase) 
+			throws MessageNotFoundException, 
+			forum.shared.exceptions.database.DatabaseRetrievalException, 
+			forum.shared.exceptions.message.ThreadNotFoundException, 
+			forum.shared.exceptions.message.SubjectNotFoundException, 
+			NotRegisteredException
+	{	
+		SearchHit[] rawHits = null;
+		if (type.equals("author"))
+		{
+			try 
+			{
+				rawHits = this.facade.searchByAuthor(this.facade.getMemberIdByUsernameAndOrEmail(searchPhrase, null),
+						0, Integer.MAX_VALUE);
+			} 
+			catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
+			{
+				throw new NotRegisteredException(e.getUserID());
+			}
+			catch (DatabaseRetrievalException e) 
+			{
+				throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+			}
+		}
+		else if (type.equals("content"))
+		{
+			rawHits = this.facade.searchByContent(searchPhrase, 0, Integer.MAX_VALUE);
+		}
+		else
+		{
+			//TODO add new exception
+		}
+		
+		List<SearchHitModel> tSearchData = null;
+		int tStart = loadConfig.getOffset();
+		int limit = 0;
+		tSearchData = this.searchReturn(rawHits);
+		limit = tSearchData.size();
+		if (loadConfig.getLimit() > 0)
+			limit = Math.min(tStart + loadConfig.getLimit(), limit);  
+		
+		return new BasePagingLoadResult<SearchHitModel>(tSearchData, loadConfig.getOffset(), tSearchData.size());
+	}
+	
+	private List<SearchHitModel> searchReturn(SearchHit[] rawHits) 
+	throws MessageNotFoundException, 
+	forum.shared.exceptions.database.DatabaseRetrievalException,
+	forum.shared.exceptions.message.ThreadNotFoundException, 
+	forum.shared.exceptions.message.SubjectNotFoundException
+	{
+		List<SearchHitModel> toReturn = new ArrayList<SearchHitModel>();
+			
+		if (rawHits != null)
+		{
+			for (SearchHit hit : rawHits)
+			{
+				toReturn.add(SearchHitToModelConvertor(hit));
+			}
+		}	
+		
+		return toReturn;
+	}
+	
+	private SearchHitModel SearchHitToModelConvertor(SearchHit hit) 
+	throws MessageNotFoundException, 
+	forum.shared.exceptions.database.DatabaseRetrievalException, 
+	forum.shared.exceptions.message.ThreadNotFoundException, forum.shared.exceptions.message.SubjectNotFoundException
+	{
+		UIMessage tMsg = hit.getMessage();
+		long tMsgID = tMsg.getMessageID();
+		String tTitle = tMsg.getTitle();
+		String tAuthor = this.getAuthorUsername(tMsg);
+		Date tDate = tMsg.getDateTime();
+		double tScore = hit.getScore();
+		
+		Collection<MessageModel> tMsgPath = new java.util.Vector<MessageModel>();
+		ThreadModel tContainingThread;
+		Collection<SubjectModel> tSubjPath = new java.util.Vector<SubjectModel>();
+		tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
+		
+		
+		try
+		{
+			while (tMsg.getFatherID() != -1)
+			{
+				tMsg = this.facade.getMessageByID(tMsg.getFatherID());
+				tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
+			}
+			
+			UIThread tRawThread = this.facade.getThreadByID(tMsg.getMessageID(), false);
+			tContainingThread = this.threadToThreadModelConvertor(tRawThread);
+			
+			UISubject tRawSubject = this.facade.getSubjectByID(tRawThread.getFatherID());
+			tSubjPath.add(this.subjectToSubjectModelConvertor(tRawSubject));
+			while (tRawSubject.getID() != -1)
+			{
+				tRawSubject = this.facade.getSubjectByID(tRawSubject.getFatherID());
+				tSubjPath.add(this.subjectToSubjectModelConvertor(tRawSubject));
+			}
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e)
+		{
+			throw new MessageNotFoundException();
+		}
+		catch (DatabaseRetrievalException e)
+		{
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+		catch (ThreadNotFoundException e)
+		{
+			throw new forum.shared.exceptions.message.ThreadNotFoundException(e.getThreadID());
+		}
+		catch (SubjectNotFoundException e)
+		{
+			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
+		}
+		
+		return new SearchHitModel(tMsgID, tMsgPath, tContainingThread, tSubjPath,
+				tTitle, tAuthor, tDate, tScore);
 	}
 
 	private MessageModel messageToMessageModelConvertor(UIMessage message) {

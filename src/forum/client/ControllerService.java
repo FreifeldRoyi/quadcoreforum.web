@@ -193,4 +193,19 @@ public interface ControllerService extends RemoteService {
 
 	List<Object> searchByAuthor(String username);
 	ThreadModel getThreadByID(long threadID, boolean shouldUpdateViews) throws ThreadNotFoundException, DatabaseRetrievalException;
+	public PagingLoadResult<SearchHitModel> searchByAuthor(
+			PagingLoadConfig loadConfig, String userName) 
+			throws MessageNotFoundException, 
+			DatabaseRetrievalException, 
+			ThreadNotFoundException, 
+			SubjectNotFoundException, 
+			NotRegisteredException;
+	
+	public PagingLoadResult<SearchHitModel> searchByContent(
+			PagingLoadConfig loadConfig, String userName) 
+			throws MessageNotFoundException, 
+			DatabaseRetrievalException, 
+			ThreadNotFoundException, 
+			SubjectNotFoundException, 
+			NotRegisteredException;
 }
