@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/hibernate/antlr-2.7.6.jar"/>
+	<classpathentry kind="lib" path="/quadcoreforum/lib/hibernate/commons-collections-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.12-bin.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-simple/slf4j-api-1.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-simple/slf4j-simple-1.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/compass/lucene/lucene-analyzers.jar"/>
+	<classpathentry kind="lib" path="lib/compass/lucene/lucene-core.jar"/>
+	<classpathentry kind="lib" path="lib/compass/lucene/lucene-highlighter.jar"/>
+	<classpathentry kind="lib" path="lib/compass/lucene/lucene-queries.jar"/>
+	<classpathentry kind="lib" path="lib/compass/lucene/lucene-snowball.jar"/>
+	<classpathentry kind="lib" path="lib/compass/lucene/lucene-spellchecker.jar"/>
+	<classpathentry kind="lib" path="lib/compass/commons-logging.jar"/>
+	<classpathentry kind="lib" path="lib/compass/compass-2.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/hibernate/commons-collections-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/hibernate/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/hibernate/hibernate3.jar"/>
+	<classpathentry kind="lib" path="lib/hibernate/javassist-3.9.0.GA.jar"/>
+	<classpathentry kind="lib" path="lib/hibernate/jta-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/gxt.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/quadcoreforum"/>
+	<classpathentry kind="output" path="war/WEB-INF/classes"/>
+</classpath>

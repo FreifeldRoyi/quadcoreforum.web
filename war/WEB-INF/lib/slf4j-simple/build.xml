@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<project name="Assignment1" default="make" basedir=".">
+
+	<path id="classpath">
+		<fileset dir="." includes="*.jar" /> 
+	</path>
+    <!-- <path id="class.path">
+
+	include all jars in the lib directory and all sub-directories
+		<fileset dir=".">
+			<include name="slf4j-api-1.6.0.jar" />
+		</fileset>
+
+	</path>-->
+
+    
+	<target name="init">
+		<mkdir dir="build"/>
+    </target>
+	
+
+    <target name="compile" depends="init" >
+        <javac srcdir="src" destdir="build" classpathref="classpath"/>
+    </target>
+	
+	<target name="make" depends="compile" >
+		<jar destfile="slf4j-simple-1.6.0.jar" basedir="build" manifest="Manifest.mf"/>
+	</target>
+</project> 
