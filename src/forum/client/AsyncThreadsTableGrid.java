@@ -437,7 +437,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 		});
 
-
 		configs.add(column);  
 
 		ColumnModel cm = new ColumnModel(configs);  

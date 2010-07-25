@@ -53,7 +53,6 @@ public class SearchPanel extends LayoutContainer
 		
 		//Search field
 		this.txtSearch.setFieldLabel("Search");
-		
 		panel.add(this.txtSearch, new FormData("90%"));
 		
 		//Search Button
@@ -106,6 +105,40 @@ public class SearchPanel extends LayoutContainer
 	private void openSearchHitsTable()
 	{
 		String toSearch = this.txtSearch.getValue();
+		int resultsPerPage = getResultsPerPagesValue();
+		AsyncSearchHitsTableGrid table = 
+			new AsyncSearchHitsTableGrid(resultsPerPage, this.getSearchType(), toSearch);
 		
+		this.add(table);
+		this.layout();
+	}
+	
+	private int getResultsPerPagesValue()
+	{
+		int toReturn = -1;
+		Radio selected = this.radGrpResults.getValue();
+		if (selected == this.rad5)
+			toReturn = 5;
+		else if (selected == this.rad10)
+			toReturn = 10;
+		else if (selected == this.rad15)
+			toReturn = 15;
+		else
+			toReturn = 20;
+		
+		return toReturn;
+	}
+	
+	private String getSearchType()
+	{
+		String toReturn = "";
+		Radio selected = this.radGrpSearch.getValue();
+		
+		if (selected == this.radSrchByAuth)
+			toReturn = "author";
+		else
+			toReturn = "content";
+		
+		return toReturn;
 	}
 }

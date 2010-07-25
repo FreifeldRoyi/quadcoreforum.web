@@ -293,11 +293,11 @@ ControllerService {
 	@Override
 	public PagingLoadResult<SearchHitModel> searchByAuthor(
 			PagingLoadConfig loadConfig, String userName) 
-			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
-			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
-			ThreadNotFoundException, 
-			SubjectNotFoundException
+			throws MessageNotFoundException, 
+			DatabaseRetrievalException, 
+			forum.shared.exceptions.message.ThreadNotFoundException, 
+			forum.shared.exceptions.message.SubjectNotFoundException,
+			NotRegisteredException 
 	{
 		return messagesController.search(loadConfig, "author", userName);
 	}
@@ -305,11 +305,11 @@ ControllerService {
 	@Override
 	public PagingLoadResult<SearchHitModel> searchByContent(
 			PagingLoadConfig loadConfig, String cont) 
-			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
-			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
-			ThreadNotFoundException, 
-			SubjectNotFoundException 
+			throws MessageNotFoundException, 
+			DatabaseRetrievalException, 
+			forum.shared.exceptions.message.ThreadNotFoundException, 
+			forum.shared.exceptions.message.SubjectNotFoundException,
+			NotRegisteredException 
 	{
 		return messagesController.search(loadConfig, "content", cont);
 	}

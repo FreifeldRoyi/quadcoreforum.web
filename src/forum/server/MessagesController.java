@@ -378,18 +378,29 @@ public class MessagesController {
 	}
 	
 	public PagingLoadResult<SearchHitModel> search(PagingLoadConfig loadConfig, 
-			String type, String searchPhrase)
-			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException,
-			DatabaseRetrievalException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
-			ThreadNotFoundException, 
-			SubjectNotFoundException 
+			String type, String searchPhrase) 
+			throws MessageNotFoundException, 
+			forum.shared.exceptions.database.DatabaseRetrievalException, 
+			forum.shared.exceptions.message.ThreadNotFoundException, 
+			forum.shared.exceptions.message.SubjectNotFoundException, 
+			NotRegisteredException
 	{	
 		SearchHit[] rawHits = null;
 		if (type.equals("author"))
 		{
-			rawHits = this.facade.searchByAuthor(this.facade.getMemberIdByUsernameAndOrEmail(searchPhrase, null),
-					0, Integer.MAX_VALUE);
+			try 
+			{
+				rawHits = this.facade.searchByAuthor(this.facade.getMemberIdByUsernameAndOrEmail(searchPhrase, null),
+						0, Integer.MAX_VALUE);
+			} 
+			catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
+			{
+				throw new NotRegisteredException(e.getUserID());
+			}
+			catch (DatabaseRetrievalException e) 
+			{
+				throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+			}
 		}
 		else if (type.equals("content"))
 		{
@@ -400,37 +411,27 @@ public class MessagesController {
 			//TODO add new exception
 		}
 		
-		List<SearchHitModel> tSearchData = null; //null
+		List<SearchHitModel> tSearchData = null;
 		int tStart = loadConfig.getOffset();
 		int limit = 0;
-		if (rawHits != null)
-		{
-			tSearchData = this.searchReturn(rawHits); //rawHits != null implies tSearchData != null
-			limit = tSearchData.size();
-			if (loadConfig.getLimit() > 0)
-				limit = Math.min(tStart + loadConfig.getLimit(), limit);  
-		}
+		tSearchData = this.searchReturn(rawHits);
+		limit = tSearchData.size();
+		if (loadConfig.getLimit() > 0)
+			limit = Math.min(tStart + loadConfig.getLimit(), limit);  
 		
-		int maxSize;
-		if (tSearchData == null)
-			maxSize = 0;
-		else
-			maxSize = tSearchData.size();
-		
-		return new BasePagingLoadResult<SearchHitModel>(tSearchData, loadConfig.getOffset(), maxSize);
+		return new BasePagingLoadResult<SearchHitModel>(tSearchData, loadConfig.getOffset(), tSearchData.size());
 	}
 	
 	private List<SearchHitModel> searchReturn(SearchHit[] rawHits) 
-		throws forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
-			DatabaseRetrievalException, 
-			ThreadNotFoundException, 
-			SubjectNotFoundException
+	throws MessageNotFoundException, 
+	forum.shared.exceptions.database.DatabaseRetrievalException,
+	forum.shared.exceptions.message.ThreadNotFoundException, 
+	forum.shared.exceptions.message.SubjectNotFoundException
 	{
-		List<SearchHitModel> toReturn = null;
+		List<SearchHitModel> toReturn = new ArrayList<SearchHitModel>();
 			
 		if (rawHits != null)
 		{
-			toReturn = new ArrayList<SearchHitModel>();
 			for (SearchHit hit : rawHits)
 			{
 				toReturn.add(SearchHitToModelConvertor(hit));
@@ -441,10 +442,9 @@ public class MessagesController {
 	}
 	
 	private SearchHitModel SearchHitToModelConvertor(SearchHit hit) 
-		throws forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
-		DatabaseRetrievalException, 
-		ThreadNotFoundException, 
-		SubjectNotFoundException
+	throws MessageNotFoundException, 
+	forum.shared.exceptions.database.DatabaseRetrievalException, 
+	forum.shared.exceptions.message.ThreadNotFoundException, forum.shared.exceptions.message.SubjectNotFoundException
 	{
 		UIMessage tMsg = hit.getMessage();
 		long tMsgID = tMsg.getMessageID();
@@ -457,21 +457,42 @@ public class MessagesController {
 		ThreadModel tContainingThread;
 		Collection<SubjectModel> tSubjPath = new java.util.Vector<SubjectModel>();
 		tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
-		while (tMsg.getFatherID() != -1)
-		{
-			tMsg = this.facade.getMessageByID(tMsg.getFatherID());
-			tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
-		}
 		
-		UIThread tRawThread = this.facade.getThreadByID(tMsg.getMessageID(), false);
-		tContainingThread = this.threadToThreadModelConvertor(tRawThread);
 		
-		UISubject tRawSubject = this.facade.getSubjectByID(tRawThread.getFatherID());
-		tSubjPath.add(this.subjectToSubjectModelConvertor(tRawSubject));
-		while (tRawSubject.getID() != -1)
+		try
 		{
-			tRawSubject = this.facade.getSubjectByID(tRawSubject.getFatherID());
+			while (tMsg.getFatherID() != -1)
+			{
+				tMsg = this.facade.getMessageByID(tMsg.getFatherID());
+				tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
+			}
+			
+			UIThread tRawThread = this.facade.getThreadByID(tMsg.getMessageID(), false);
+			tContainingThread = this.threadToThreadModelConvertor(tRawThread);
+			
+			UISubject tRawSubject = this.facade.getSubjectByID(tRawThread.getFatherID());
 			tSubjPath.add(this.subjectToSubjectModelConvertor(tRawSubject));
+			while (tRawSubject.getID() != -1)
+			{
+				tRawSubject = this.facade.getSubjectByID(tRawSubject.getFatherID());
+				tSubjPath.add(this.subjectToSubjectModelConvertor(tRawSubject));
+			}
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e)
+		{
+			throw new MessageNotFoundException();
+		}
+		catch (DatabaseRetrievalException e)
+		{
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+		catch (ThreadNotFoundException e)
+		{
+			throw new forum.shared.exceptions.message.ThreadNotFoundException(e.getThreadID());
+		}
+		catch (SubjectNotFoundException e)
+		{
+			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
 		}
 		
 		return new SearchHitModel(tMsgID, tMsgPath, tContainingThread, tSubjPath,

@@ -192,17 +192,17 @@ public interface ControllerService extends RemoteService {
 	 */
 	public PagingLoadResult<SearchHitModel> searchByAuthor(
 			PagingLoadConfig loadConfig, String userName) 
-			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
-			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
+			throws MessageNotFoundException, 
+			DatabaseRetrievalException, 
+			ThreadNotFoundException, 
+			SubjectNotFoundException, 
+			NotRegisteredException;
 	
 	public PagingLoadResult<SearchHitModel> searchByContent(
 			PagingLoadConfig loadConfig, String userName) 
-			throws forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException, 
-			forum.server.updatedpersistentlayer.DatabaseRetrievalException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException, 
-			forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
+			throws MessageNotFoundException, 
+			DatabaseRetrievalException, 
+			ThreadNotFoundException, 
+			SubjectNotFoundException, 
+			NotRegisteredException;
 }
