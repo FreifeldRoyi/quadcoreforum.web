@@ -75,11 +75,7 @@ public class MainPanelToolBar extends ToolBar {
 			@Override
 			public void componentSelected(ButtonEvent ce) 
 			{
-				ContentPanel tMainViewPanel = (ContentPanel)Registry.get("MainViewPanel");
-				tMainViewPanel.removeAll();
-				SearchPanel sp = new SearchPanel();
-				tMainViewPanel.add(sp);
-				tMainViewPanel.layout();
+				MainPanel.changeMainViewToPanel(new SearchPanel());
 			}
 		});
 		
