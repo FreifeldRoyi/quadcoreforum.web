@@ -51,6 +51,7 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		this.resultsPerPage = numOfPages;
 		this.searchPhrase = searchPhrase;
 		System.out.println("constructor\n");
+		System.out.println("this is for vitali\n");
 	}
 	
 	@Override  
