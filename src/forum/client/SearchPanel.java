@@ -140,7 +140,7 @@ public class SearchPanel extends LayoutContainer
 		if (table != null && table.getParent() == panel)
 			panel.remove(table);
 		table = new AsyncSearchHitsTableGrid(resultsPerPage, this.getSearchType(), toSearch);
-		table.setHeight(300);
+		table.setHeight(250);
 		panel.add(table, new FormData("100%"));
 		panel.layout();
 		this.layout();

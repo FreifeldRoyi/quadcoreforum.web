@@ -80,6 +80,7 @@ public class MainPanelToolBar extends ToolBar {
 		});
 		
 		fastLoginMenuButton = new Button("Fast Login"); 
+		fastLoginMenuButton.setVisible(false);
 
 		Menu tFastLoginMenu = new Menu();
 		tFastLoginMenu.add(new LabelToolItem());
@@ -234,8 +235,11 @@ public class MainPanelToolBar extends ToolBar {
 				fastLoginMenuButton.setEnabled(false);
 				loginButton.setEnabled(false);
 				// TODO: Open login dialog
-				QuadCoreForumWeb.SERVICE.login(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
-						"admin", "1234", tLoginCallBack);
+				
+				MainPanel.changeMainViewToPanel(new LoginForm());
+				
+//				QuadCoreForumWeb.SERVICE.login(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
+//						"admin", "1234", tLoginCallBack);
 			}
 
 		});
@@ -302,7 +306,7 @@ public class MainPanelToolBar extends ToolBar {
 	}
 
 	public void switchToGuestView() {
-		fastLoginMenuButton.setVisible(true);
+		fastLoginMenuButton.setVisible(false);
 		loginButton.setVisible(true);
 		registerButton.setVisible(true);
 		logoutButton.setVisible(false);

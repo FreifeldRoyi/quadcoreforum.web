@@ -135,4 +135,13 @@ public class MessageModel extends BaseTreeModel implements Serializable {
 			this.set("SelectedContent", tRenderedContent); 
 		}
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		return other != null
+		&& 
+		other instanceof MessageModel
+		&& 
+		((MessageModel)other).getID() == getID();
+	}
 }

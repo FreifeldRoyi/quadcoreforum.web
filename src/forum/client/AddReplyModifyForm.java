@@ -38,6 +38,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import forum.shared.MessageModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
+import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.exceptions.message.SubjectAlreadyExistsException;
 
 public class AddReplyModifyForm extends LayoutContainer {  
@@ -325,7 +326,16 @@ public class AddReplyModifyForm extends LayoutContainer {
 							public void onFailure(Throwable caught) {
 								replyModifyOpenAddButton.setEnabled(true);
 								QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-
+								if (caught instanceof MessageNotFoundException) {
+									MessageBox.alert("Father message not found", "The father message " +
+											"wasn't found. Probably it was deleted by another user", 
+									new Listener<MessageBoxEvent>() {
+										@Override
+										public void handleEvent(MessageBoxEvent be) {
+											MainPanel.changeMainViewToSubjectsAndThreads();
+										}
+									});
+								}
 							}
 
 							@Override

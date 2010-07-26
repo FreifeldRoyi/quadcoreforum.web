@@ -6,6 +6,7 @@ import java.util.List;
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.data.BasePagingLoader;
+import com.extjs.gxt.ui.client.data.LoadEvent;
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.extjs.gxt.ui.client.data.PagingLoader;
@@ -14,12 +15,15 @@ import com.extjs.gxt.ui.client.event.BaseEvent;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.Listener;
+import com.extjs.gxt.ui.client.event.LoadListener;
 import com.extjs.gxt.ui.client.event.MessageBoxEvent;
 import com.extjs.gxt.ui.client.event.RowEditorEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedListener;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.store.ListStore;
+import com.extjs.gxt.ui.client.store.StoreListener;
+import com.extjs.gxt.ui.client.store.TreeStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
@@ -43,6 +47,7 @@ import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
 import forum.shared.UserModel.UserType;
@@ -65,6 +70,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	private PagingLoader<PagingLoadResult<ThreadModel>> loader;
 	private ListStore<ThreadModel> store;
 
+	// fetch
 	private Grid<ThreadModel> grid;
 	private ContentPanel threadsPanel;
 
@@ -105,6 +111,54 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		this.messagesTree = messagesTree;
 	}
 
+	private void continueSearch() {
+		ThreadModel tTreadToSearch = 
+			QuadCoreForumWeb.SEARCH_STATE_HIT.getContainingThread();
+		if (tTreadToSearch == null) {
+			System.out.println("nulllllllllllllllllllllllllllllllllllll2");
+		}
+		else {
+			ThreadModel tThread = store.findModel(tTreadToSearch);
+
+			if (tThread == null) {
+				if (statusBar.getActivePage() <= statusBar.getPageSize()) {
+					statusBar.next();
+				}
+				else
+					System.out.println("nulllllllllllllllllllllllllllllllllllll1");
+			}
+			else {
+				//				threadsPanel.remove(grid);
+				//				this.remove(threadsPanel);
+
+/*				store.update(tThread);
+				store.commitChanges();
+
+
+				grid.getView().layout();
+				threadsPanel.add(grid);
+				//				this.add(threadsPanel);
+
+				threadsPanel.layout();
+				this.layout();
+*/
+
+
+				//				this.setSize(this.getWidth(), this.getHeight() + 1);
+				//			this.setSize(this.getWidth(), this.getHeight() - 1);
+
+				//				threadsPanel.setSize(threadsPanel.getWidth(), threadsPanel.getHeight() - 1);
+				/*
+				messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() + 1);
+				messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() - 1);*/
+				///				statusBar.refresh();
+				grid.getSelectionModel().select(tThread, false);
+
+			}
+		}	
+	}
+
+
 	private void initializeProxy() {
 		proxy = new RpcProxy<PagingLoadResult<ThreadModel>>() {
 			/*			@Override
@@ -114,22 +168,29 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				}
 		};
 	}*/
-
 			@Override
 			protected void load(Object loadConfig,
 					final AsyncCallback<PagingLoadResult<ThreadModel>> callback) {
 				if (subjectID == null || subjectID.getID() == -1)
 					return;
 
+				if (QuadCoreForumWeb.SEARCH_STATE)
+	//				return;
+					QuadCoreForumWeb.WORKING_STATUS.setBusy("Searching...");
+				else
+					QuadCoreForumWeb.WORKING_STATUS.setBusy("Loading threads...");
 
-				QuadCoreForumWeb.WORKING_STATUS.setBusy("Loading threads...");
-				service.getThreads((PagingLoadConfig) loadConfig, subjectID.getID(), new AsyncCallback<PagingLoadResult<ThreadModel>>() {
+				System.out.println("loading threads againnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
+
+				
+				service.getThreads((PagingLoadConfig) loadConfig, subjectID.getID(), 
+						new AsyncCallback<PagingLoadResult<ThreadModel>>() {
 
 					@Override
 					public void onFailure(Throwable caught) {
 						callback.onFailure(caught);
-//						grid.el().unmask();
-//						statusBar.setEnabled(true);
+						//						grid.el().unmask();
+						//						statusBar.setEnabled(true);
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 
@@ -143,23 +204,24 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 						callback.onSuccess(result);
 
 						if (result.getTotalLength() == 0) {
-		//					statusBar.setEnabled(false);
+							//					statusBar.setEnabled(false);
 							messagesTree.setGuestView();
 							setButtonsEnableStatus(false);
 						}
 						else {
-//							if (!statusBar.isEnabled())
-	//							statusBar.setEnabled(true);
-//							statusBar.setEnabled(true);
+							//							if (!statusBar.isEnabled())
+							//							statusBar.setEnabled(true);
+							//							statusBar.setEnabled(true);
 							// select the first row
-//							store.commitChanges();
+							//							store.commitChanges();
+							if (!QuadCoreForumWeb.SEARCH_STATE)
 							grid.getSelectionModel().select(0, false);
 						}
-							//				grid.el().unmask();
-					//					statusBar.setEnabled(true);
-						
-						
-						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+
+						if (QuadCoreForumWeb.SEARCH_STATE)
+							continueSearch();
+						else
+							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 
 
 						//						/*							if (shouldRefresh) {
@@ -178,10 +240,12 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 	private void initializeLoader() {
 		this.loader = new BasePagingLoader<PagingLoadResult<ThreadModel>>(proxy); 
+		Registry.register("ThreadsLoader", loader);
 	}
 
 	private void initializeStore() {
 		store = new ListStore<ThreadModel>(loader);  
+		Registry.register("ThreadsTreeStore", store);
 	}
 
 	public void load() {
@@ -190,21 +254,32 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		System.out.println((this.grid == null) + " dddddddddddddddddd");
 		System.out.println("111111111111111111111111111111111111 " + proxy);
 		System.out.println("'''''''''''''''''''''''''''''''''' " + Registry.get("NoTabExpand"));
-		
-		if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") > 0)) {
-			System.out.println("enters and exits");
-			Registry.register("NoTabExpand", ((Long)Registry.get("NoTabExpand") - 1));
-			//					statusBar.setEnabled(true);
-			QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-			return;
-		}
-		else if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") == 0)) {
-			Registry.register("NoTabExpand", null);
 
-			//					statusBar.setEnabled(true);
-			QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-			return;
+		if (!QuadCoreForumWeb.SEARCH_STATE) {
+			if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") > 0)) {
+				System.out.println("enters and exits");
+				Registry.register("NoTabExpand", ((Long)Registry.get("NoTabExpand") - 1));
+				//					statusBar.setEnabled(true);
+				QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+				return;
+			}
+			else if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") == 0)) {
+				Registry.register("NoTabExpand", null);
+
+				//					statusBar.setEnabled(true);
+				QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+				return;
+			}
 		}
+		
+		
+/*		else if (QuadCoreForumWeb.SEARCH_STATE && !QuadCoreForumWeb.SEARCH_OF_THREADS_NOT_PERFORMED) {
+			System.out.println("gettinggggggggggggggggggggggggggg here");
+			if (QuadCoreForumWeb.SEARCH_STATE_HIT.getSubjectPath().lastElement().getID() == subjectID.getID())
+				QuadCoreForumWeb.SEARCH_OF_THREADS_NOT_PERFORMED = true;
+		}
+		else if (QuadCoreForumWeb.SEARCH_STATE)
+			return;*/
 
 		if (this.subjectID != null && this.subjectID.getID() != -1)
 			this.loader.load(0, 10);
@@ -292,7 +367,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		statusBar.setPageSize(10);
 		statusBar.setEnabled(subjectID != null && subjectID.getID() != -1);
 		statusBar.bind(loader);
-//		statusBar.setEnabled(false);
+		//		statusBar.setEnabled(false);
 	}
 
 	@Override  
@@ -510,7 +585,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 		grid.addListener(Events.RowClick, tRowSelectionListener);
 
-/*
+		/*
 		grid.addListener(Events.Attach, new Listener<GridEvent<ThreadModel>>() {  
 			public void handleEvent(GridEvent<ThreadModel> be) {  
 				if (subjectID != null && subjectID.getID() != -1) {
@@ -530,7 +605,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				}
 			}  
 		});  
-*/
+		 */
 
 
 
@@ -594,20 +669,27 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 	private void invokeListenerOperation() {
 		System.out.println("sssssssssssssssssssssssssss ");
-		if (subjectID != null && grid.getSelectionModel() != null && grid.getSelectionModel().getSelectedItem() != null) {
+		if (subjectID != null && grid.getSelectionModel() != null &&
+				grid.getSelectionModel().getSelectedItem() != null) {
 			setButtonsEnableStatus(true);
+			
+			
 			final ThreadModel tSelectedThread = grid.getSelectionModel().getSelectedItem();
 			boolean tShouldUpdateViews = shouldUpdateViews;
 			shouldUpdateViews = false;
+			
 			QuadCoreForumWeb.SERVICE.getThreadByID(tSelectedThread.getID(), tShouldUpdateViews, new AsyncCallback<ThreadModel>() {
 
 				@Override
 				public void onFailure(Throwable caught) {
+					System.out.println("pppppppppppppppppppppppppppppppppooooooooooooooooooooooooooooooooooo");
 					loader.load();
 				}
 
 				@Override
 				public void onSuccess(ThreadModel result) {
+					if (QuadCoreForumWeb.SEARCH_STATE) return;
+					System.out.println("iooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooook");
 					tSelectedThread.setTopic(result.getTopic());
 					tSelectedThread.setResponsesNumber(result.getResponsesNumber());
 					tSelectedThread.setViewsNumber(result.getViewsNumber());
@@ -615,8 +697,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 					store.commitChanges();
 				}
 			});
-
-
 		}
 		else
 			setButtonsEnableStatus(false);

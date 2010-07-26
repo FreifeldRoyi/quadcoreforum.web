@@ -87,4 +87,9 @@ public class SubjectModel extends BaseTreeModel implements Serializable {
 	public String toString() {
 		return getName();
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		return other != null && other instanceof SubjectModel && ((SubjectModel)other).getID() == getID();
+	}
 }

@@ -196,10 +196,15 @@ public class MainPanel extends LayoutContainer
 	}
 	
 	public static void changeMainViewToSubjectsAndThreads() {
+/*		if (QuadCoreForumWeb.SEARCH_STATE) {
+			Registry.register("NoTabExpand", 2L);
+		}
+		else*/
+			Registry.register("NoTabExpand", 1L);
+//		QuadCoreForumWeb.SEARCH_STATE = false;
 		ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
 		tMainViewPanel.removeAll();
-		System.out.println("pppppppppppppppppppppppppppoooooooooooooooooooo09000000000000000000000000000000000");
-		Registry.register("NoTabExpand", 1L);
+//		Registry.register("NoTabExpand", 1L);
 		tMainViewPanel.add((TabPanel)Registry.get("maincontentpanel"));
 		tMainViewPanel.layout();
 	}

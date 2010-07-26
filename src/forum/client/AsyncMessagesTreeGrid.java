@@ -2,6 +2,7 @@ package forum.client;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Stack;
 
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
@@ -11,6 +12,7 @@ import com.extjs.gxt.ui.client.data.BaseTreeLoader;
 import com.extjs.gxt.ui.client.data.ModelKeyProvider;
 import com.extjs.gxt.ui.client.data.RpcProxy;
 import com.extjs.gxt.ui.client.data.TreeLoader;
+import com.extjs.gxt.ui.client.event.BaseEvent;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.Listener;
@@ -26,8 +28,6 @@ import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.button.Button;
-import com.extjs.gxt.ui.client.widget.form.TextArea;
-import com.extjs.gxt.ui.client.widget.grid.CellEditor;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnData;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
@@ -82,7 +82,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 	public void changeThreadID(long threadID, boolean selectionChanged) {
 		this.selectionChanged = selectionChanged;
-		System.out.println("Changing threadID");
+		System.out.println("Changing threadIDdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
 		this.threadID = threadID;
 		if (loader != null)
 			loader.load(null);
@@ -134,18 +134,29 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 					@Override
 					public void onFailure(Throwable caught) {
-						tree.getStore().getLoader().load();
+						loader.load(loadConfig);
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 
 					@Override
 					public void onSuccess(List<MessageModel> result) {
 						callback.onSuccess(result);
-						if (loadConfig == null && result.size() > 0) {
-							tree.getSelectionModel().select(0, false);
+						if (result.size() > 0) {
+							if (QuadCoreForumWeb.SEARCH_STATE) {
+								System.out.println("ssssssssssssssssstateeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+								System.out.println("dsdsddsdsdsdsd");
+								loadMessages();
+							}
+							else
+								tree.getSelectionModel().select(0, false);
+
 						}
-						else if (result.size() == 0)
+						else if (result.size() == 0) {
 							setGuestView();
+							if (QuadCoreForumWeb.SEARCH_STATE) {
+								// TODO:
+							}
+						}
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 				};
@@ -180,15 +191,16 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 		this.expander = new RowExpander(); 
 
 		expander.setDateTimeFormat(DateTimeFormat.getMediumDateTimeFormat());  
-	
-		
-		expander.setTemplate(tpl);
-		
 
-		
+
+		expander.setTemplate(tpl);
+
+
+
 
 		ColumnConfig name = new ColumnConfig("display", "Name", 800);  
-		name.setRenderer(new TreeGridCellRenderer<MessageModel>() {
+		name.setRenderer(new TreeGridCellRenderer<MessageModel>());
+/*		name.setRenderer(new TreeGridCellRenderer<MessageModel>() {
 
 			@Override
 			public Object render(MessageModel model, String property,
@@ -201,11 +213,12 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 					config.style = getRegularRowStyle(config.style);
 				return super.render(model, property, config, rowIndex, colIndex, store, grid);
 			}
-		});
+		});*/
 
 		ColumnConfig date = new ColumnConfig("date", "Date", 180);  
 		date.setDateTimeFormat(DateTimeFormat.getMediumDateTimeFormat());  
-		date.setRenderer(new GridCellRenderer<MessageModel>() {
+		date.setRenderer(null);
+/*		date.setRenderer(new GridCellRenderer<MessageModel>() {
 
 			@Override
 			public Object render(MessageModel model, String property,
@@ -222,7 +235,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 			}
 		});
-
+*/
 
 
 		ColumnModel cm = new ColumnModel(Arrays.asList(tNumberer, expander, name, date));  
@@ -232,7 +245,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 		tree = new TreeGrid<MessageModel>(store, cm);  
 
-
+		tree.setStripeRows(true);
 
 
 
@@ -263,7 +276,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 		Listener<TreeGridEvent<MessageModel>> tUpdateListener =
 			new Listener<TreeGridEvent<MessageModel>>() {  
 			public void handleEvent(final TreeGridEvent<MessageModel> be) {  
-
+				if (!QuadCoreForumWeb.SEARCH_STATE) {
 				if (be.getModel() != null) {
 					invokeExpansionOperation(be.getModel());
 				}
@@ -271,6 +284,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 					setGuestView();
 
 			}  
+			}
 		};
 
 
@@ -286,12 +300,14 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 			@Override
 			public void selectionChanged(SelectionChangedEvent<MessageModel> se) {
+				if (!QuadCoreForumWeb.SEARCH_STATE) {
 				if (se.getSelectedItem() != null) {
 					invokeSelectListenerOperation(se.getSelectedItem());
 				}
 				else
 					setGuestView();
 
+			}
 			}
 		});
 
@@ -322,9 +338,84 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 	}
 
+	private void notFound() {
+		System.out.println("nnnnnnnnnnnnnnnnnnnnn");
+		QuadCoreForumWeb.SEARCH_STATE = false;
+	}
+	
+	private void loadMessages() {
+		if (threadID != QuadCoreForumWeb.SEARCH_STATE_HIT.getContainingThread().getID())
+			return;
+		tree.collapseAll();
+		final Stack<MessageModel> tMessagesPath = new Stack<MessageModel>();
+		final Stack<MessageModel> tTempStack = new Stack<MessageModel>();
+
+		System.out.println("123777777777777777777777777777777777");
+		Stack<MessageModel> tRealMessagesPath = (Stack<MessageModel>) 
+		QuadCoreForumWeb.SEARCH_STATE_HIT.getMessagePath();
+
+		while (!tRealMessagesPath.isEmpty()) {
+			tTempStack.push(tRealMessagesPath.pop());
+		}
+		while (!tTempStack.isEmpty()) {
+			MessageModel tCurrent = tTempStack.pop();
+			tMessagesPath.push(tCurrent);
+			tRealMessagesPath.push(tCurrent);
+		}
+		
+		Listener<BaseEvent> tExpandListener = new Listener<BaseEvent>() {
+			@Override
+			public void handleEvent(BaseEvent be) {
+				MessageModel tCurrent = tMessagesPath.pop();
+
+				MessageModel tCurrentInTree = tree.getStore().findModel(tCurrent);
+				if (tCurrentInTree == null) {
+					tree.removeListener(Events.Expand, this);
+					System.out.println("123444444444444444444444444444444444444444444444444444");
+					notFound();
+				}
+				else if (tMessagesPath.isEmpty()) {
+					System.out.println("12399999999999999999999999999999999999999");
+					System.out.println("tcurent model 999999999999 " 
+							+ tCurrentInTree.getID() + " expanded: " + tree.isExpanded(tCurrentInTree));
+					tree.removeListener(Events.Expand, this);
+					tree.getSelectionModel().select(tCurrentInTree, false);
+					//tree.getSelectionModel().select(tCurrentInTree, false);
+					QuadCoreForumWeb.SEARCH_STATE = false;
+					//MainPanel.changeMainViewToSubjectsAndThreads();
+					System.out.println("LOADING MESSAGE COMPLETED");
+				}
+				else {
+					tree.setExpanded(tCurrentInTree, true);
+				}
+			}
+		};
+
+		tree.addListener(Events.Expand, tExpandListener); 
 
 
+		MessageModel tCurrent = tMessagesPath.pop();
+		System.out.println("it is "  + tCurrent.getID());
+		System.out.println("and in store " + tree.getStore().getAt(0).getID());
+		MessageModel tCurrentInTree = tree.getStore().findModel(tCurrent);
+		if (tCurrentInTree == null) {
+			System.out.println("trying to find " + tCurrent.getID() + "  " + tCurrent.getTitle());
+			tree.removeListener(Events.Expand, tExpandListener);
+			notFound();
+		}
+		else if (tMessagesPath.isEmpty()) {
+			tree.removeListener(Events.Expand, tExpandListener);
+			tree.getSelectionModel().select(tCurrentInTree, false);
+			System.out.println("required is  sssssssssssssssss" + tCurrentInTree.getID());
+			System.out.println("LOADING MESSAGE COMPLETED");
+			QuadCoreForumWeb.SEARCH_STATE = false;
 
+			//MainPanel.changeMainViewToSubjectsAndThreads();
+		}
+		else {
+			tree.setExpanded(tCurrentInTree, true);
+		}
+	}
 
 	private void invokeSelectListenerOperation(final MessageModel model) {
 		service.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
@@ -334,6 +425,7 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 			@Override
 			public void onSuccess(MessageModel result) {
+				System.out.println("notifying selection of resultttttttttttttttttttttttttttttttt " + result.getID());
 				model.setTitle(result.getTitle());
 				model.setContent(result.getContent());
 				model.setDate(result.getDate());
@@ -367,13 +459,9 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 				model.setDate(result.getDate());
 				store.update(model);
 
-				// Update all the rows in order to render them again
-				for (MessageModel tModel : store.getAllItems())
-					store.update(tModel);
 
 				System.out.println("pppppppppppppppppppppppppppppppppppp");
 				store.commitChanges();
-				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
 
 				/*				if (tSelected != null) {
 					com.google.gwt.dom.client.Element tRow = tree.getTreeView().getRow(tSelected);
@@ -390,7 +478,8 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 
 	public void setToolBarVisible(boolean value) {
-		this.toolbar.setVisible(value);
+		if (this.toolbar != null)
+			this.toolbar.setVisible(value);
 		this.messagesPanel.layout();
 
 		messagesPanel.fireEvent(Events.Resize);

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 
 import com.extjs.gxt.ui.client.data.BasePagingLoadResult;
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
@@ -401,7 +402,6 @@ public class MessagesController {
 			forum.shared.exceptions.message.SubjectNotFoundException, 
 			NotRegisteredException
 	{
-		try {
 		SearchHit[] rawHits = null;
 		if (type.equals("author"))
 		{
@@ -445,11 +445,6 @@ public class MessagesController {
 		
 		
 		return new BasePagingLoadResult<SearchHitModel>(tSearchHitsToReturn, loadConfig.getOffset(), tSearchData.size());
-		}
-		catch (NullPointerException e) {
-			e.printStackTrace();
-			return null;
-		}
 	}
 	
 	private List<SearchHitModel> searchReturn(SearchHit[] rawHits) 
@@ -478,25 +473,31 @@ public class MessagesController {
 	forum.shared.exceptions.database.DatabaseRetrievalException, 
 	forum.shared.exceptions.message.ThreadNotFoundException, forum.shared.exceptions.message.SubjectNotFoundException
 	{
-		UIMessage tMsg = hit.getMessage();
+
+		try
+		{
+		UIMessage tMsg = facade.getMessageByID(hit.getMessage().getMessageID());
 		long tMsgID = tMsg.getMessageID();
 		String tTitle = tMsg.getTitle();
 		String tAuthor = this.getAuthorUsername(tMsg);
-		System.out.println("before Date");
-		String tDate = tMsg.getDate();
-		System.out.println("after Date");
+		String tContent = tMsg.getContent();
+		
 		double tScore = hit.getScore();
 		
-		Collection<MessageModel> tMsgPath = new java.util.Vector<MessageModel>();
+		Stack<MessageModel> tMsgPath = new Stack<MessageModel>();
+		
 		ThreadModel tContainingThread;
-		Collection<SubjectModel> tSubjPath = new java.util.Vector<SubjectModel>();
-		tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
+		Stack<SubjectModel> tSubjPath = new Stack<SubjectModel>();
 		
+		tMsgPath.push(this.messageToMessageModelConvertor(tMsg));
+
 		
-		try
-		{
 			while (tMsg.getFatherID() != -1)
 			{
+				System.out.println("id = " + tMsg.getMessageID() +
+						" tmsg = " + tMsg.getTitle() + " father = " +
+						tMsg.getFatherID());
+				System.out.println("adddddddddddddddddddddddding to path");
 				tMsg = this.facade.getMessageByID(tMsg.getFatherID());
 				tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
 			}
@@ -505,12 +506,16 @@ public class MessagesController {
 			tContainingThread = this.threadToThreadModelConvertor(tRawThread);
 			
 			UISubject tRawSubject = this.facade.getSubjectByID(tRawThread.getFatherID());
-			tSubjPath.add(this.subjectToSubjectModelConvertor(tRawSubject));
-			while (tRawSubject.getID() != -1)
+			tSubjPath.push(this.subjectToSubjectModelConvertor(tRawSubject));
+			while (tRawSubject.getFatherID() != -1)
 			{
 				tRawSubject = this.facade.getSubjectByID(tRawSubject.getFatherID());
-				tSubjPath.add(this.subjectToSubjectModelConvertor(tRawSubject));
+				tSubjPath.push(this.subjectToSubjectModelConvertor(tRawSubject));
 			}
+			
+			return new SearchHitModel(tMsgID, tMsgPath, tContainingThread, tSubjPath,
+					tTitle, tAuthor, tContent, tScore);
+
 		}
 		catch (forum.server.updatedpersistentlayer.pipe.message.exceptions.MessageNotFoundException e)
 		{
@@ -529,8 +534,6 @@ public class MessagesController {
 			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
 		}
 		
-		return new SearchHitModel(tMsgID, tMsgPath, tContainingThread, tSubjPath,
-				tTitle, tAuthor, tDate, tScore);
 	}
 
 	private MessageModel messageToMessageModelConvertor(UIMessage message) {

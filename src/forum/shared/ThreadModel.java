@@ -17,11 +17,11 @@ public class ThreadModel implements ModelData, Serializable {
 	private static final long serialVersionUID = 3529080073742060764L;
 
 	private Map<String, Object> properties;
-	
+
 	public ThreadModel() {
 		properties = new HashMap<String, Object>();
 	}
-	
+
 	public ThreadModel(long id, String topic, long responsesNumber, long viewsNumber) {
 		this();
 		this.setId(id);
@@ -29,7 +29,7 @@ public class ThreadModel implements ModelData, Serializable {
 		this.setResponsesNumber(responsesNumber);
 		this.setViewsNumber(viewsNumber);
 	}
-	
+
 	/**
 	 * @return the id
 	 */
@@ -54,11 +54,11 @@ public class ThreadModel implements ModelData, Serializable {
 	public void setTopic(String topic) {
 		this.set("topic", topic);
 	}
-	
+
 	public String toString() {
 		return this.getTopic();
 	}
-	
+
 	/**
 	 * @return the responsesNumber
 	 */
@@ -84,6 +84,11 @@ public class ThreadModel implements ModelData, Serializable {
 		this.set("views", viewsNumber);
 	}
 
+	public boolean equals(Object other) {
+		return other != null &&
+		other instanceof ThreadModel &&
+		((ThreadModel)other).getID() == getID();
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override

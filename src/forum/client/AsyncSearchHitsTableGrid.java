@@ -2,6 +2,7 @@ package forum.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.data.BasePagingLoader;
@@ -9,6 +10,9 @@ import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.extjs.gxt.ui.client.data.PagingLoader;
 import com.extjs.gxt.ui.client.data.RpcProxy;
+import com.extjs.gxt.ui.client.event.BaseEvent;
+import com.extjs.gxt.ui.client.event.Events;
+import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
@@ -18,13 +22,14 @@ import com.extjs.gxt.ui.client.widget.grid.Grid;
 import com.extjs.gxt.ui.client.widget.grid.GridView;
 import com.extjs.gxt.ui.client.widget.grid.RowNumberer;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
-import com.extjs.gxt.ui.client.widget.layout.FlowLayout;
 import com.extjs.gxt.ui.client.widget.toolbar.PagingToolBar;
+import com.extjs.gxt.ui.client.widget.treepanel.TreePanel;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import forum.shared.MessageModel;
 import forum.shared.SearchHitModel;
-import forum.shared.exceptions.user.NotRegisteredException;
+import forum.shared.SubjectModel;
 
 public class AsyncSearchHitsTableGrid extends LayoutContainer 
 {
@@ -72,10 +77,27 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		tContent.setBottomComponent(hitsPager);
 		tContent.add(this.grid);
 		this.add(tContent);
-		
+
 		//TODO add listener here
 		System.out.println("results " + this.resultsPerPage);
 		loader.load(0, this.resultsPerPage);
+	}
+
+
+
+	private void loadThreadsAndMessages(SearchHitModel tHitToShow) {
+		final TreePanel<SubjectModel> subjectsTree = Registry.get("SubjectsTree");
+		subjectsTree.fireEvent(Events.OnMouseDown);
+		subjectsTree.unmask();
+	}
+
+	private void notFound() {
+		QuadCoreForumWeb.SEARCH_STATE = false;
+		final TreePanel<SubjectModel> subjectsTree = (TreePanel<SubjectModel>)Registry.get("SubjectsTree");
+
+		subjectsTree.unmask();
+
+		System.out.println("Not found");
 	}
 
 	private void initializeGrid() 
@@ -97,6 +119,99 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		this.grid.setAutoExpandMax(3000);
 		this.grid.setAutoExpandColumn("title");
 		this.grid.getView().setShowDirtyCells(false);
+
+		grid.addListener(Events.OnMouseDown, new Listener<BaseEvent>() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void handleEvent(BaseEvent be) {
+				MainPanel.changeMainViewToSubjectsAndThreads();
+				final SearchHitModel tModel = grid.getSelectionModel().getSelectedItem();
+				if (tModel == null) {
+					be.setCancelled(true);
+					return;
+				}
+				else {
+					QuadCoreForumWeb.SEARCH_STATE = true;
+				//	QuadCoreForumWeb.SEARCH_OF_THREADS_NOT_PERFORMED = false;
+					QuadCoreForumWeb.SEARCH_STATE_HIT = tModel;
+					final TreePanel<SubjectModel> subjectsTree = (TreePanel<SubjectModel>)Registry.get("SubjectsTree");
+
+					subjectsTree.mask();
+
+					subjectsTree.collapseAll();
+
+					final Stack<SubjectModel> tSubjectsPath = new Stack<SubjectModel>();
+					final Stack<SubjectModel> tTempStack = new Stack<SubjectModel>();
+
+					while (!tModel.getSubjectPath().isEmpty()) {
+						tTempStack.push(tModel.getSubjectPath().pop());
+					}
+					while (!tTempStack.isEmpty()) {
+						SubjectModel tCurrent = tTempStack.pop();
+						tSubjectsPath.push(tCurrent);
+						tModel.getSubjectPath().push(tCurrent);
+					}
+
+					Listener<BaseEvent> tExpandListener = new Listener<BaseEvent>() {
+						@Override
+						public void handleEvent(BaseEvent be) {
+							SubjectModel tCurrent = tSubjectsPath.pop();
+
+							SubjectModel tCurrentInTree = subjectsTree.getStore().findModel(tCurrent);
+							if (tCurrentInTree == null) {
+								subjectsTree.removeListener(Events.Expand, this);
+								notFound();
+							}
+							else if (tSubjectsPath.isEmpty()) {
+								subjectsTree.getSelectionModel().select(tCurrentInTree, false);
+								subjectsTree.removeListener(Events.Expand, this);
+								loadThreadsAndMessages(tModel);
+							}
+							else {
+								subjectsTree.setExpanded(tCurrentInTree, true);
+							}
+						}
+					};
+
+					subjectsTree.addListener(Events.Expand, tExpandListener); 
+
+
+					SubjectModel tCurrent = tSubjectsPath.pop();
+					SubjectModel tCurrentInTree = subjectsTree.getStore().findModel(tCurrent);
+					if (tCurrentInTree == null) {
+						subjectsTree.removeListener(Events.Expand, tExpandListener);
+						notFound();
+					}
+					else if (tSubjectsPath.isEmpty()) {
+						subjectsTree.removeListener(Events.Expand, tExpandListener);
+						subjectsTree.getSelectionModel().select(tCurrentInTree, false);
+						loadThreadsAndMessages(tModel);
+					}
+					else {
+						subjectsTree.setExpanded(tCurrentInTree, true);
+					}
+
+					System.out.println("Path ============== ");
+					for (SubjectModel tSubject : tModel.getSubjectPath())
+						System.out.println(tSubject.getName());
+					System.out.println("------");
+					System.out.println(tModel.getMessageID());
+					System.out.println("------");
+					for (MessageModel tMessage : tModel.getMessagePath())
+						System.out.println(tMessage.getTitle());
+
+					//					System.out.println(tModel.getMessagePath());
+					//				System.out.println(tModel.getSubjectPath());
+					System.out.println("Path ============== ");
+
+
+
+				}
+
+			}
+
+
+		});
 
 		//TODO define a listener
 	}

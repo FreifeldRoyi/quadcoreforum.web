@@ -176,6 +176,12 @@ public class RegistrationForm  extends LayoutContainer
 
 		this.setLayout(new FitLayout());
 		this.add(registrationPanel);
+		cancelButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				MainPanel.changeMainViewToSubjectsAndThreads();
+			}
+		});
 		registerButton.addSelectionListener(new SelectionListener<ButtonEvent>() 
 				{
 

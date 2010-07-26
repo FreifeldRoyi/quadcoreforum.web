@@ -2,9 +2,9 @@ package forum.shared;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import com.extjs.gxt.ui.client.data.ModelData;
 
@@ -19,9 +19,9 @@ public class SearchHitModel implements ModelData, Serializable
 		this.properties = new HashMap<String, Object>();
 	}
 	
-	public SearchHitModel(long msgID, Collection<MessageModel> msgPath,
-			ThreadModel contThread, Collection<SubjectModel> subjPath, String title, 
-			String authorUserName, String date, double score)
+	public SearchHitModel(long msgID, Stack<MessageModel> msgPath,
+			ThreadModel contThread, Stack<SubjectModel> subjPath, String title, 
+			String authorUserName, String content, double score)
 	{
 		this();
 		this.setMessageID(msgID);
@@ -30,7 +30,7 @@ public class SearchHitModel implements ModelData, Serializable
 		this.setSubjectPath(subjPath);
 		this.setTitle(title);
 		this.setAuthorUserName(authorUserName);
-		this.setDate(date);
+		this.setContent(content);
 		this.setScore(score);
 	}
 
@@ -44,7 +44,7 @@ public class SearchHitModel implements ModelData, Serializable
 		return this.get("containingThread");
 	}
 	
-	public Collection<SubjectModel> getSubjectPath()
+	public Stack<SubjectModel> getSubjectPath()
 	{
 		return this.get("subjectPath");
 	}
@@ -66,11 +66,11 @@ public class SearchHitModel implements ModelData, Serializable
 	}
 	
 	/**
-	 * @return the date
+	 * @return the content
 	 */
-	public Date getDate()
+	public String getContent()
 	{
-		return this.get("date");
+		return this.get("content");
 	}
 	
 	/**
@@ -107,14 +107,14 @@ public class SearchHitModel implements ModelData, Serializable
 	}
 	
 	/**
-	 * @param date - the date the message was written
+	 * @param content - the content of the message
 	 */
-	public void setDate(String date)
+	public void setContent(String content)
 	{
-		this.set("date", date);
+		this.set("content", content);
 	}
 	
-	public void setSubjectPath(Collection<SubjectModel> subjPath) 
+	public void setSubjectPath(Stack<SubjectModel> subjPath) 
 	{
 		this.set("subjectPath", subjPath);
 	}
@@ -124,7 +124,7 @@ public class SearchHitModel implements ModelData, Serializable
 		this.set("containingThread", contThread);		
 	}
 
-	public void setMessagePath(Collection<MessageModel> msgPath) 
+	public void setMessagePath(Stack<MessageModel> msgPath) 
 	{
 		this.set("messagePath", msgPath);		
 	}

@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 
 import forum.shared.ActiveConnectedData;
+import forum.shared.SearchHitModel;
 import forum.shared.UserModel;
 import forum.shared.UserModel.UserType;
 import forum.shared.exceptions.database.DatabaseUpdateException;
@@ -39,6 +40,10 @@ public class QuadCoreForumWeb implements EntryPoint {
 	public static Status MEMBERS_NUMBER_STATUS;
 	public static Status WORKING_STATUS = new Status();  
 
+//	public static boolean SEARCH_OF_THREADS_NOT_PERFORMED = true;
+	public static boolean SEARCH_STATE = false;
+	public static SearchHitModel SEARCH_STATE_HIT = null;
+	
 	private MainPanel mainPanel;
 
 	private ContentPanel mainContentPanel;
