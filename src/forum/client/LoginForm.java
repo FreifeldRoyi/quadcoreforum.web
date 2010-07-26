@@ -6,10 +6,12 @@ import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.event.MessageBoxEvent;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.widget.Info;
+import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
 import com.extjs.gxt.ui.client.widget.form.TextField;
+import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -19,18 +21,19 @@ import forum.shared.exceptions.database.DatabaseRetrievalException;
 import forum.shared.exceptions.user.NotRegisteredException;
 import forum.shared.exceptions.user.WrongPasswordException;
 
-public class LoginForm extends FormPanel {
+public class LoginForm extends LayoutContainer {
 
-
+	private FormPanel panel = new FormPanel();
+	
 	protected void onRender(Element target, int index)
 	{
+		
+		
 		super.onRender(target,index);
 		final Button loginButton = new Button("login"); 
 		final Button cancelButton = new Button("Cancel"); 
 		final TextField<String> username = new TextField<String>(); 
 		final TextField<String> password = new TextField<String>(); 
-		
-
 		
 		username.setFieldLabel("Username");
 		username.setMinLength(4);
@@ -44,25 +47,23 @@ public class LoginForm extends FormPanel {
 				
 		username.setValidateOnBlur(false);
 		password.setValidateOnBlur(false);
+
 		
-		username.setStyleName("label");
-		password.setStyleName("label");
-	
+		username.setStyleName("username");
 		
-		username.setLabelStyle("padding-left: 0.05cm; padding-top: 0.015cm; padding-bottom: 0.015cm; width: 2cm");
-		password.setLabelStyle("padding-left: 0.05cm; padding-top: 0.015cm; padding-bottom: 0.015cm; width: 2cm");
+		username.setLabelStyle("padding-top: 0.5cm; padding-bottom: 1cm;");
 		
-		this.add(username);
-		this.add(password);
+		
+		panel.setBorders(false);  
+		panel.setBodyBorder(false);  
+		panel.add(username);
+		panel.add(password);
 	
 						
-		this.setBodyBorder(true);
+//		panel.setBodyBorder(true);
 		
-		this.addButton(loginButton);
-		this.addButton(cancelButton);
-		this.add(loginButton);
-		this.add(cancelButton);
-	    
+		panel.addButton(loginButton);
+		panel.addButton(cancelButton);
 		
 		
 	    loginButton.setVisible(true);
@@ -70,7 +71,7 @@ public class LoginForm extends FormPanel {
 		
 		//this.setButtonAlign(HorizontalAlignment.CENTER);
 		
-		this.setHeading("Login Form");
+	    panel.setHeading("Login Form");
 		//this.setWidth(100);
 		
 		cancelButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
@@ -162,6 +163,9 @@ public class LoginForm extends FormPanel {
 					}
 			});
 	
+		
+		this.setLayout(new FitLayout());
+		this.add(panel);
 	} 
 
 	
