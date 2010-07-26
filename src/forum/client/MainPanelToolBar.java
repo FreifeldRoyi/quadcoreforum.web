@@ -245,13 +245,9 @@ public class MainPanelToolBar extends ToolBar
 			@Override
 			public void componentSelected(ButtonEvent ce) {
 				fastLoginMenuButton.setEnabled(false);
-				loginButton.setEnabled(false);
-				// TODO: Open login dialog
 				
 				MainPanel.changeMainViewToPanel(new LoginForm());
 				
-//				QuadCoreForumWeb.SERVICE.login(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
-//						"admin", "1234", tLoginCallBack);
 			}
 
 		});

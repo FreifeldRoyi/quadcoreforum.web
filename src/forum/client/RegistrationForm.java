@@ -49,6 +49,7 @@ public class RegistrationForm  extends LayoutContainer
 		final TextField<String> lastName = new TextField<String>(); 
 		final ControllerServiceAsync controlAsync = GWT.create(ControllerService.class); 
 
+		
 		registrationPanel = new FormPanel();
 
 		//tRegistrationPanel.setAutoHeight(true);
@@ -216,10 +217,7 @@ public class RegistrationForm  extends LayoutContainer
 
 						@Override 
 						public void onSuccess(Void result) 
-						{ 
-							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-							MainPanel.changeMainViewToSubjectsAndThreads();
-							Info.display("Register Success", "The registration process was completed successfully!");
+						{
 							username.clear();
 							password.clear();
 							confirmPassword.clear();
@@ -228,6 +226,10 @@ public class RegistrationForm  extends LayoutContainer
 							email.clear();
 							confirmEmail.clear();
 							registerButton.setEnabled(true);
+
+							MainPanel.changeMainViewToSubjectsAndThreads();
+							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
+							Info.display("Register Success", "The registration process was completed successfully!");
 						}
 							}
 					); 

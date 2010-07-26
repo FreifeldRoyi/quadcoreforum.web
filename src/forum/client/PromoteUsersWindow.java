@@ -16,6 +16,7 @@ import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 import com.extjs.gxt.ui.client.widget.grid.Grid;
 import com.extjs.gxt.ui.client.widget.grid.GridView;
+import com.extjs.gxt.ui.client.widget.grid.RowNumberer;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.layout.FormLayout;
 import com.google.gwt.user.client.Element;
@@ -65,6 +66,7 @@ public class PromoteUsersWindow extends LayoutContainer
 	
 	private void addColumnConfigs()
 	{
+		this.configs.add(new RowNumberer());
 		this.addToConfigs("username","User Name", 100);
 		this.addToConfigs("firstName", "First Name", 100);
 		this.addToConfigs("lastName", "Last Name", 100);
@@ -187,6 +189,7 @@ public class PromoteUsersWindow extends LayoutContainer
 		this.grid = new Grid<UserModel>(this.store, cm);
 		this.grid.setStyleAttribute("borderTop", "none");
 		this.grid.setAutoExpandColumn("username");
+		this.grid.setAutoExpandMax(3000);
 		this.setBorders(true);
 		this.grid.setStripeRows(true);
 		

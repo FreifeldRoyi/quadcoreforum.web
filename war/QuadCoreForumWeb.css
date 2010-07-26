@@ -80,3 +80,12 @@ h1 {
 .subjectsLoading {
 	background-image: url(../ext-resources/images/default/grid/loading.gif);
 }
+
+.username {
+		padding-top: 0.5cm;
+		padding-bottom: 1cm;
+}
+
+.password {
+	padding-top: 1cm;
+}
