@@ -1,0 +1,82 @@
+/** Add css rules here for your application. */
+
+h1 {
+  font-size: 2em;
+  text-align: center;
+}
+
+
+.sendButton {
+  display: block;
+  font-size: 16pt;
+}
+
+/** Most GWT widgets already have a style name defined */
+.gwt-DialogBox {
+  width: 400px;
+}
+
+.dialogVPanel {
+  margin: 5px;
+}
+
+.serverResponseLabelError {
+  color: red;
+}
+
+
+.field {
+	padding-left: 0.5cm
+}
+	
+.label {
+	padding-bottom: 0.25cm;
+	padding-top: 0.25cm;
+	padding-right: 0.3cm;
+}
+
+.registrationForm {
+	width: 350;
+}
+
+.topLevelSubjects{
+    fontSize: 12px;
+}
+
+.evenRowsTableBackground {
+	background-color:#F5F9EE;
+}
+
+.messagesTreeRowStyle {
+	white-space: normal;
+	height: 45px;
+	position: relative;
+}
+
+.messagesTreeNextRowStyle {
+	margin: 16px
+}
+
+.evenRowsColor {
+	background-color: #F5F9EE;
+}
+
+.oddRowsColor {
+	background-color: #FFFFFF;
+}
+
+.statusBarFontStyle {
+}
+
+.transparent {
+	padding: 0px;
+	background-color: rgb(240, 240, 240);
+}
+
+.subjectsRefresh {
+	background-image: url(../ext-resources/images/default/grid/refresh.gif);
+}
+
+.subjectsLoading {
+	background-image: url(../ext-resources/images/default/grid/loading.gif);
+}
