@@ -34,7 +34,8 @@ import forum.shared.exceptions.user.WrongPasswordException;
  * @author sepetnit
  *
  */
-public class MainPanelToolBar extends ToolBar {
+public class MainPanelToolBar extends ToolBar 
+{
 	private Button fastLoginButton = new Button("Login");
 	private Button loginButton = new Button("Login");
 	private Button logoutButton = new Button("Logout");
@@ -54,8 +55,19 @@ public class MainPanelToolBar extends ToolBar {
 
 	public MainPanelToolBar() {
 		super();
-		showMembersButton = new Button("Show Members");
-		showMembersButton.setVisible(false);
+		showMembersButton = new Button("Show Members", new SelectionListener<ButtonEvent>() 
+		{
+
+			@Override
+			public void componentSelected(ButtonEvent ce) 
+			{
+				PromoteUsersWindow win = new PromoteUsersWindow();
+				MainPanel.changeMainViewToPanel(win);
+				//win.showWindow();
+			}
+		});
+		showMembersButton.setVisible(false);		
+		
 		changeProfileButton = new Button("Change Profile");
 		changeProfileButton.setVisible(false);
 		showMembersButton.setVisible(false);

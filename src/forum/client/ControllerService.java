@@ -18,6 +18,7 @@ import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.exceptions.message.SubjectNotFoundException;
 import forum.shared.exceptions.message.ThreadNotFoundException;
 import forum.shared.exceptions.user.MemberAlreadyExistsException;
+import forum.shared.exceptions.user.NotPermittedException;
 import forum.shared.exceptions.user.NotRegisteredException;
 import forum.shared.exceptions.user.WrongPasswordException;
 import forum.shared.ActiveConnectedData;
@@ -163,13 +164,9 @@ public interface ControllerService extends RemoteService {
 			forum.shared.exceptions.message.SubjectNotFoundException;
 	
 	public ActiveConnectedData getActiveUsersNumber() throws DatabaseRetrievalException;
-
 	
-	
-	
-	
-	
-	
+	public List<UserModel> getUsers() 
+	throws DatabaseRetrievalException;
 	
 	/*		public abstract void searchByAuthor(Component comp, String username);
 
@@ -211,4 +208,14 @@ public interface ControllerService extends RemoteService {
 			ThreadNotFoundException, 
 			SubjectNotFoundException, 
 			NotRegisteredException;
+	
+	public void PromoteMemberToModerator(long applicantID, String username) 
+	throws NotPermittedException, 
+	NotRegisteredException, 
+	DatabaseRetrievalException;
+	
+	public void DemoteModeratorToMember(long applicantID, String username) 
+	throws DatabaseRetrievalException, 
+	NotPermittedException, 
+	NotRegisteredException;
 }
