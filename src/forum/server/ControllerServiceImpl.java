@@ -13,7 +13,6 @@ import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.MainForumLogic;
 import forum.server.domainlayer.interfaces.UIMember;
 import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
-import forum.server.updatedpersistentlayer.pipe.message.exceptions.ThreadNotFoundException;
 import forum.shared.ActiveConnectedData;
 import forum.shared.MessageModel;
 import forum.shared.SearchHitModel;
@@ -24,6 +23,7 @@ import forum.shared.exceptions.database.DatabaseRetrievalException;
 import forum.shared.exceptions.database.DatabaseUpdateException;
 import forum.shared.exceptions.message.MessageNotFoundException;
 import forum.shared.exceptions.user.MemberAlreadyExistsException;
+import forum.shared.exceptions.user.NotPermittedException;
 import forum.shared.exceptions.user.NotRegisteredException;
 import forum.shared.exceptions.user.WrongPasswordException;
 
@@ -329,6 +329,26 @@ ControllerService {
 		return this.messagesController.getThreadByID(threadID, shouldUpdateViews);
 	}
 
+	public List<UserModel> getUsers() 
+	throws DatabaseRetrievalException 
+	{
+		return this.usersController.getUsers();
+	}
 	
-	
+	public void PromoteMemberToModerator(long applicantID, String username) 
+	throws NotPermittedException, 
+	NotRegisteredException, 
+	DatabaseRetrievalException
+	{
+		this.usersController.promoteMemberToModerator(applicantID,username);
+	}
+
+	@Override
+	public void DemoteModeratorToMember(long applicantID, String username) 
+	throws DatabaseRetrievalException, 
+	NotPermittedException, 
+	NotRegisteredException 
+	{
+		this.usersController.DemoteModeratorToMember(applicantID, username);
+	}
 }

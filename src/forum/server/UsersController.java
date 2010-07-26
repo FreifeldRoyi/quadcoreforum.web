@@ -7,11 +7,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.interfaces.UIMember;
 import forum.server.domainlayer.interfaces.UIUser;
+import forum.server.domainlayer.message.NotPermittedException;
 import forum.server.domainlayer.user.Permission;
 import forum.server.updatedpersistentlayer.DatabaseUpdateException;
 import forum.server.updatedpersistentlayer.pipe.user.exceptions.MemberAlreadyExistsException;
@@ -67,6 +69,25 @@ public class UsersController {
 		for (Permission tCurrentPermission : user.getPermissions())
 			permissions.add(forum.shared.Permission.valueOf(tCurrentPermission.toString()));
 		return new UserModel(user.getID(), permissions);
+	}
+	
+	private UserModel memberToUserModelConverter(UIMember member)
+	{
+		Collection<forum.shared.Permission> permission = new ArrayList<forum.shared.Permission>();
+		for (Permission tCurrentPermission : member.getPermissions())
+			permission.add(forum.shared.Permission.valueOf(tCurrentPermission.toString()));
+		
+		String type = "";
+		if (member.isAllowed(Permission.SET_MODERATOR))
+			type = "ADMIN";
+		else if (member.isAllowed(Permission.DELETE_MESSAGE))
+			type = "MODERATOR";
+		else
+			type = "MEMBER";
+		
+		return new UserModel(member.getID(),member.getUsername(),
+				member.getLastName(), member.getFirstName(),
+				member.getEmail(), type, permission);
 	}
 
 	public UserModel logout(String username) throws
@@ -152,6 +173,76 @@ public class UsersController {
 			throw new WrongPasswordException();
 		}
 		catch (forum.server.updatedpersistentlayer.DatabaseRetrievalException e) {
+			throw new DatabaseRetrievalException();
+		}		
+	}
+
+	public List<UserModel> getUsers() 
+	throws forum.shared.exceptions.database.DatabaseRetrievalException 
+	{
+		List<UserModel> toReturn = new ArrayList<UserModel>();
+		try
+		{
+			Collection<UIMember> tUsers = this.facade.getAllMembers();
+			
+			
+			for (UIMember member : tUsers)
+			{
+				toReturn.add(this.memberToUserModelConverter(member));
+			}
+		}
+		catch (forum.server.updatedpersistentlayer.DatabaseRetrievalException e)
+		{
+			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
+		}
+		
+		return toReturn;
+	}
+
+	public void promoteMemberToModerator(long applicantID, String username) 
+	throws forum.shared.exceptions.user.NotPermittedException, 
+	NotRegisteredException, 
+	DatabaseRetrievalException 
+	{		
+		try 
+		{
+			this.facade.promoteToBeModerator(applicantID, username);
+		} 
+		catch (NotPermittedException e) 
+		{
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(), 
+					forum.shared.Permission.valueOf(e.getPermission().toString()));
+		} 
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
+		{
+			throw new NotRegisteredException(e.getUsername());
+		} 
+		catch (DatabaseUpdateException e) 
+		{
+			throw new DatabaseRetrievalException();
+		}
+	}
+
+	public void DemoteModeratorToMember(long applicantID, String username) 
+	throws DatabaseRetrievalException, 
+	forum.shared.exceptions.user.NotPermittedException, 
+	NotRegisteredException 
+	{
+		try 
+		{
+			this.facade.demoteToBeMember(applicantID, username);
+		} 
+		catch (NotPermittedException e) 
+		{
+			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(), 
+				forum.shared.Permission.valueOf(e.getPermission().toString()));
+		} 
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
+		{
+			throw new NotRegisteredException(e.getUsername());
+		} 
+		catch (DatabaseUpdateException e) 
+		{
 			throw new DatabaseRetrievalException();
 		}		
 	}

@@ -72,4 +72,10 @@ public interface ControllerServiceAsync {
 	
 	void searchByContent(PagingLoadConfig loadConfig,
 			String cont, AsyncCallback<PagingLoadResult<SearchHitModel>> callback);	
+	
+	void getUsers(AsyncCallback<List<UserModel>> callback);
+	
+	void PromoteMemberToModerator(long applicantID, String username, AsyncCallback<Void> callback);
+	
+	void DemoteModeratorToMember(long applicantID, String username, AsyncCallback<Void> callback);
 }
