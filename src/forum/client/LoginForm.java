@@ -86,13 +86,6 @@ public class LoginForm extends LayoutContainer {
 
 					public void componentSelected(ButtonEvent ce) 
 					{
-						//boolean valid = username.validate() && password.validate();
-						//if (valid) 
-						//{
-							//TODO WTF is this ?! System.out.println("2");
-		
-							
-							// TODO: Open login dialog
 							final AsyncCallback<UserModel> tLoginCallBack = new AsyncCallback<UserModel>() {
 								private MainPanel mainPanel = Registry.get("MainPanel");
 								private MainPanelToolBar mptb = Registry.get("ToolBar");
@@ -103,10 +96,8 @@ public class LoginForm extends LayoutContainer {
 
 									MainPanel.changeMainViewToSubjectsAndThreads();
 									
+
 									
-									
-									System.out.println("Lital");
-									loginButton.setEnabled(false);
 									username.clear();
 									password.clear();
 									

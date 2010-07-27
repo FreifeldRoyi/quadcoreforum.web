@@ -135,7 +135,6 @@ public class SearchPanel extends LayoutContainer
 	private void openSearchHitsTable()
 	{
 		String toSearch = this.txtSearch.getValue();
-		System.out.println("preparing for search. search phrase entered is: " + toSearch);
 		int resultsPerPage = getResultsPerPagesValue();
 		if (table != null && table.getParent() == panel)
 			panel.remove(table);

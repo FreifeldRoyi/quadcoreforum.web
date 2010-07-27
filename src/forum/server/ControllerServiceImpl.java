@@ -1,7 +1,6 @@
 package forum.server;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
@@ -11,8 +10,6 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import forum.client.ControllerService;
 import forum.server.domainlayer.ForumFacade;
 import forum.server.domainlayer.MainForumLogic;
-import forum.server.domainlayer.interfaces.UIMember;
-import forum.server.updatedpersistentlayer.pipe.message.exceptions.SubjectNotFoundException;
 import forum.shared.ActiveConnectedData;
 import forum.shared.MessageModel;
 import forum.shared.SearchHitModel;
@@ -192,27 +189,20 @@ ControllerService {
 
 	public ActiveConnectedData getActiveUsersNumber() throws DatabaseRetrievalException {
 		try {
-			Collection<String> tActiveUsernames = facade.getActiveMemberUserNames();
-			Collection<String> tActiveNames = new ArrayList<String>();
-			long i = 1;
-			for (String tUsername : tActiveUsernames) {
-				try {
-					UIMember tMember = facade.getMemberByID(facade.getMemberIdByUsernameAndOrEmail(tUsername, null));
-					tActiveNames.add(i + ") " + tMember.getLastName() + " " + tMember.getFirstName());
-					i++;
-				}
-				catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
-					continue;
-				}
-			}
-
-			return new ActiveConnectedData(facade.getActiveGuestsNumber(), tActiveNames);
+			return new ActiveConnectedData(facade.getActiveGuestsNumber(), new ArrayList<String>(facade.getActiveMemberUserNames()));
 		}
 		catch (forum.server.updatedpersistentlayer.DatabaseRetrievalException e) {
 			throw new DatabaseRetrievalException();
 		}
 	}
 
+	public UserModel updateMemberProfile(final long id, final String username, final String firstName, final String lastName, final String email) 
+	throws NotRegisteredException, MemberAlreadyExistsException, DatabaseUpdateException {
+		return usersController.updateMemberProfile(id, username, firstName, lastName, email);
+	}
+	
+	
+	
 	/*		public abstract void searchByAuthor(Component comp, String username);
 
 		public abstract void searchByContent(Component comp, String phrase);	
@@ -299,11 +289,6 @@ ControllerService {
 			forum.shared.exceptions.message.SubjectNotFoundException,
 			NotRegisteredException 
 	{
-		System.out.println("Entering searchByAuthor method:\n" +
-				"parameters are:\n" +
-				"1. " + loadConfig.toString() + "\n" +
-						"2. author\n" +
-						"3. " + userName);
 		return messagesController.search(loadConfig, "author", userName);
 	}
 
@@ -316,11 +301,6 @@ ControllerService {
 			forum.shared.exceptions.message.SubjectNotFoundException,
 			NotRegisteredException 
 	{
-		System.out.println("Entering searchByContent method:\n" +
-				"parameters are:\n" +
-				"1. " + loadConfig.toString() + "\n" +
-						"2. content\n" +
-						"3. " + cont);
 		return messagesController.search(loadConfig, "content", cont);
 	}
 

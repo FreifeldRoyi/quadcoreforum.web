@@ -69,9 +69,6 @@ public class AddReplyModifyForm extends LayoutContainer {
 
 	private long subjectID;
 
-
-
-
 	private SelectionListener<ButtonEvent> replyListener;
 	private SelectionListener<ButtonEvent> modifyListener;
 	private SelectionListener<ButtonEvent> openThreadListener;
@@ -378,9 +375,14 @@ public class AddReplyModifyForm extends LayoutContainer {
 
 					@Override
 					public void onFailure(Throwable caught) {
-						caught.printStackTrace();
-						// TODO Auto-generated method stub
-						// TODO: IF THE MESSAGE WAD DELETED
+						if (caught instanceof MessageNotFoundException) {
+							MessageBox.alert("Modify message error", "Message could not be found", new Listener<MessageBoxEvent>() {
+								@Override
+								public void handleEvent(MessageBoxEvent be) {
+									MainPanel.changeMainViewToSubjectsAndThreads();
+								}
+							});
+						}
 					}
 
 					@Override

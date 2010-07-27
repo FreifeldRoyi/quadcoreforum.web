@@ -78,4 +78,7 @@ public interface ControllerServiceAsync {
 	void PromoteMemberToModerator(long applicantID, String username, AsyncCallback<Void> callback);
 	
 	void DemoteModeratorToMember(long applicantID, String username, AsyncCallback<Void> callback);
+
+	void updateMemberProfile(long id, String username, String firstName, String lastName,
+			String email, AsyncCallback<UserModel> callback);
 }

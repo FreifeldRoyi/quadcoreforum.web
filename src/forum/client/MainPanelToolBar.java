@@ -106,13 +106,11 @@ public class MainPanelToolBar extends ToolBar
 		registerButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
-				MainPanel.changeMainViewToPanel((RegistrationForm)Registry.get("RegistrationForm"));
+				RegistrationAndProfileForm tRegistration = new RegistrationAndProfileForm();
+				tRegistration.setupRegistrationForm();
+				MainPanel.changeMainViewToPanel(tRegistration);
 			}
 		});
-		
-		
-		
-		
 		
 		
 		fastLoginMenuButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
@@ -205,7 +203,6 @@ public class MainPanelToolBar extends ToolBar
 						@Override
 						public void handleEvent(MessageBoxEvent be) {
 							if (fastLoginAsked) {
-								System.out.println("udsdsdsddsd");
 								fastLoginMenuButton.showMenu();
 								fastLoginUsernameField.setValue(fastLoginUsername);
 								fastLoginPasswordField.setValue(fastLoginPassword);
@@ -289,6 +286,19 @@ public class MainPanelToolBar extends ToolBar
 							}
 						});
 				}
+		});
+		
+		
+		changeProfileButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				RegistrationAndProfileForm tProfileChanging = new RegistrationAndProfileForm();
+				tProfileChanging.setupProfileForm(QuadCoreForumWeb.CONNECTED_USER_DATA.getUsername(), 
+						QuadCoreForumWeb.CONNECTED_USER_DATA.getFirstName(),
+						QuadCoreForumWeb.CONNECTED_USER_DATA.getLastName(), 
+						QuadCoreForumWeb.CONNECTED_USER_DATA.getEmail());
+				MainPanel.changeMainViewToPanel(tProfileChanging);
+			}
 		});
 
 		fastLoginButton.setEnabled(false);

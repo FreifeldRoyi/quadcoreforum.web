@@ -6,7 +6,6 @@ import java.util.List;
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.data.BasePagingLoader;
-import com.extjs.gxt.ui.client.data.LoadEvent;
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
 import com.extjs.gxt.ui.client.data.PagingLoadResult;
 import com.extjs.gxt.ui.client.data.PagingLoader;
@@ -15,15 +14,12 @@ import com.extjs.gxt.ui.client.event.BaseEvent;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.Listener;
-import com.extjs.gxt.ui.client.event.LoadListener;
 import com.extjs.gxt.ui.client.event.MessageBoxEvent;
 import com.extjs.gxt.ui.client.event.RowEditorEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedListener;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.store.ListStore;
-import com.extjs.gxt.ui.client.store.StoreListener;
-import com.extjs.gxt.ui.client.store.TreeStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
@@ -47,9 +43,9 @@ import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 import forum.shared.ThreadModel;
+import forum.shared.UserModel;
 import forum.shared.UserModel.UserType;
 import forum.shared.exceptions.database.DatabaseUpdateException;
 import forum.shared.exceptions.message.MessageNotFoundException;
@@ -104,20 +100,213 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		topicColumn = new ColumnConfig("topic", "Topic", 800);
 		threadRowEditor = new RowEditor<ThreadModel>();  
 		threadRowEditor.setEnabled(false);
+		
+		initializeProxy();
+		// loader  
+		initializeLoader();
+
+		this.initializeStore();
+
+		this.initializeStatusbar();
+
+		this.initializeGrid();
+
+		this.initializeToolbar();
+
+		threadRowEditor.addListener(Events.AfterEdit, new Listener<RowEditorEvent>() {
+			@Override
+			public void handleEvent(final RowEditorEvent be) {
+				be.setCancelled(true);
+				ThreadModel tSelectedModel = grid.getSelectionModel().getSelectedItem();
+				QuadCoreForumWeb.SERVICE.modifyThread(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
+						tSelectedModel.getID(), topicEditorField.getValue(),
+						new AsyncCallback<ThreadModel>() {
+
+					@Override
+					public void onFailure(Throwable caught) {
+						Info.display("Modification error", "Can't modify thread");
+						threadRowEditor.stopEditing(false);
+					}
+
+					@Override
+					public void onSuccess(ThreadModel result) {
+						Info.display("Modification success", "The thread was modified successfully");
+						threadRowEditor.stopEditing(true);
+					}
+				});
+			}
+		});
+
+
+
+
+		grid.addPlugin(threadRowEditor);  
+
+
+		openNewThreadButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				AddReplyModifyForm tOpenThread = new AddReplyModifyForm();
+				tOpenThread.initThreadsOpenningDialog(AsyncThreadsTableGrid.this.subjectID, grid, 
+						store);
+				MainPanel.changeMainViewToPanel(tOpenThread);
+			}
+		});
+
+		modifyThreadButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+
+			@Override  
+			public void componentSelected(ButtonEvent ce) {
+				if (modifyThreadButton.isPressed()) {
+					threadRowEditor.setEnabled(true);
+					threadRowEditor.stopEditing(false);
+					threadRowEditor.startEditing(store.indexOf(grid.getSelectionModel().getSelectedItem()), true);
+				}
+				else {
+					threadRowEditor.stopEditing(false);
+					threadRowEditor.setEnabled(false);
+				}
+			}
+		}); 
+
+
+
+
+		threadsPanel.layout();
+	}  
+
+	public void setToolBarVisible(boolean value) {
+		if (this.toolbar != null)
+			this.toolbar.setVisible(value);
+	}
+
+	public void setGuestView() {
+		if (openNewThreadButton != null)
+			this.openNewThreadButton.setEnabled(false);
+		if (modifyThreadButton != null)
+			this.modifyThreadButton.setEnabled(false);
+		if (deleteThreadButton != null)
+			this.deleteThreadButton.setEnabled(false);
+	}
+	
+	public void setButtonsEnableStatus() {
+		UserModel tConnectedUser = QuadCoreForumWeb.CONNECTED_USER_DATA;
+		if (openNewThreadButton != null)
+			this.openNewThreadButton.setEnabled(subjectID.getID() != -1);
+		
+		if (modifyThreadButton != null && subjectID.getID() != -1)
+			this.modifyThreadButton.setEnabled(tConnectedUser.getType() == UserType.ADMIN ||
+					tConnectedUser.getType() == UserType.MODERATOR);		
+		else if (subjectID.getID() == -1)
+			this.modifyThreadButton.setEnabled(false);
+		
+		if (deleteThreadButton != null && subjectID.getID() != -1)
+			this.deleteThreadButton.setEnabled(tConnectedUser.getType() == UserType.ADMIN ||
+					tConnectedUser.getType() == UserType.MODERATOR);
+		else if (subjectID.getID() == -1)
+			this.deleteThreadButton.setEnabled(false);
+	}
+
+
+	private void initializeGrid() {
+
+
+		List<ColumnConfig> configs = new ArrayList<ColumnConfig>();  
+
+		RowNumberer rn = new RowNumberer();
+		rn.setWidth(30);
+		configs.add(rn);
+
+		topicColumn.setRenderer(new GridCellRenderer<ThreadModel>() {
+
+			@Override
+			public Object render(ThreadModel model, String property,
+					ColumnData config, int rowIndex, int colIndex,
+					ListStore<ThreadModel> store, Grid<ThreadModel> grid) {
+				return "<b><a style=\"color: #385F95; text-decoration: none;\" >"
+				+ model.get("topic")
+				+ "</a></b><br /><a style=\"color: #385F95; text-decoration: none;\"> Thread</a>";
+			}
+		});
+
+
+		topicEditorField = new TextField<String>();  
+		topicEditorField.setAllowBlank(false);
+		topicColumn.setEditor(new CellEditor(topicEditorField));  
+
+		topicColumn.setAlignment(HorizontalAlignment.LEFT);  
+		configs.add(topicColumn);  
+
+		ColumnConfig column = new ColumnConfig("responses", "Responses#", 100);  
+		column.setAlignment(HorizontalAlignment.CENTER);  
+
+
+		configs.add(column);  
+
+		column = new ColumnConfig("views", "Views#", 100);
+		column.setAlignment(HorizontalAlignment.CENTER);  
+
+		
+
+		configs.add(column);  
+
+		ColumnModel cm = new ColumnModel(configs);  
+
+		threadsPanel = new ContentPanel();  
+
+		threadsPanel.setFrame(false);  
+		threadsPanel.setHeaderVisible(false);
+		threadsPanel.setButtonAlign(HorizontalAlignment.CENTER);  
+		threadsPanel.setLayout(new FitLayout());  
+		threadsPanel.setBottomComponent(statusBar);  
+
+		grid = new Grid<ThreadModel>(store, cm);  
+
+		GridView view = new GridView();
+		view.setEmptyText("The subject has no threads.");
+		grid.setView(view); 
+
+		grid.setAutoExpandMax(3000);
+		grid.setBorders(false);  
+		grid.setAutoExpandColumn("topic");
+
+		
+		grid.setStripeRows(true);
+		grid.getView().setShowDirtyCells(false);
+
+		Listener<BaseEvent> tRowSelectionListener = new Listener<BaseEvent>() {
+			@Override
+			public void handleEvent(BaseEvent be) {
+				invokeListenerOperation();
+			}
+		};
+
+		grid.addListener(Events.RowClick, tRowSelectionListener);
+
+		grid.getSelectionModel().addSelectionChangedListener(new SelectionChangedListener<ThreadModel>() {
+
+			@Override
+			public void selectionChanged(SelectionChangedEvent<ThreadModel> se) {
+				shouldUpdateViews = true;
+				invokeListenerOperation();
+			}
+		});
+
+
+
+		
 	}
 
 	public void setMessagesTree(AsyncMessagesTreeGrid messagesTree) {
-		System.out.println("setting  " + messagesTree != null);
 		this.messagesTree = messagesTree;
 	}
 
 	private void continueSearch() {
+		if (QuadCoreForumWeb.SEARCHING_MESSAGES)
+			return;
 		ThreadModel tTreadToSearch = 
 			QuadCoreForumWeb.SEARCH_STATE_HIT.getContainingThread();
-		if (tTreadToSearch == null) {
-			System.out.println("nulllllllllllllllllllllllllllllllllllll2");
-		}
-		else {
 			ThreadModel tThread = store.findModel(tTreadToSearch);
 
 			if (tThread == null) {
@@ -125,49 +314,22 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 					statusBar.next();
 				}
 				else
-					System.out.println("nulllllllllllllllllllllllllllllllllllll1");
+					MessageBox.alert("path error", "the message wasn't found " +
+							"probably it was deleted by another user", new Listener<MessageBoxEvent>() {
+								@Override
+								public void handleEvent(MessageBoxEvent be) {
+									MainPanel.changeMainViewToSubjectsAndThreads();
+								}
+							});
 			}
 			else {
-				//				threadsPanel.remove(grid);
-				//				this.remove(threadsPanel);
-
-/*				store.update(tThread);
-				store.commitChanges();
-
-
-				grid.getView().layout();
-				threadsPanel.add(grid);
-				//				this.add(threadsPanel);
-
-				threadsPanel.layout();
-				this.layout();
-*/
-
-
-				//				this.setSize(this.getWidth(), this.getHeight() + 1);
-				//			this.setSize(this.getWidth(), this.getHeight() - 1);
-
-				//				threadsPanel.setSize(threadsPanel.getWidth(), threadsPanel.getHeight() - 1);
-				/*
-				messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() + 1);
-				messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() - 1);*/
-				///				statusBar.refresh();
 				grid.getSelectionModel().select(tThread, false);
-
 			}
 		}	
-	}
 
 
 	private void initializeProxy() {
 		proxy = new RpcProxy<PagingLoadResult<ThreadModel>>() {
-			/*			@Override
-			protected void load(Object loadConfig,
-					final AsyncCallback<PagingLoadResult<ThreadModel>> callback) {
-				service.getThreads((PagingLoadConfig) loadConfig, subjectID.getID(), callback);			
-				}
-		};
-	}*/
 			@Override
 			protected void load(Object loadConfig,
 					final AsyncCallback<PagingLoadResult<ThreadModel>> callback) {
@@ -175,47 +337,31 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 					return;
 
 				if (QuadCoreForumWeb.SEARCH_STATE)
-	//				return;
 					QuadCoreForumWeb.WORKING_STATUS.setBusy("Searching...");
 				else
 					QuadCoreForumWeb.WORKING_STATUS.setBusy("Loading threads...");
 
-				System.out.println("loading threads againnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
-
-				
 				service.getThreads((PagingLoadConfig) loadConfig, subjectID.getID(), 
 						new AsyncCallback<PagingLoadResult<ThreadModel>>() {
 
 					@Override
 					public void onFailure(Throwable caught) {
 						callback.onFailure(caught);
-						//						grid.el().unmask();
-						//						statusBar.setEnabled(true);
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 
 					@Override
 					public void onSuccess(
 							PagingLoadResult<ThreadModel> result) {
-						System.out.println("0000000000000000000000000");
-
-						System.out.println(result.getTotalLength());
-
 						callback.onSuccess(result);
-
 						if (result.getTotalLength() == 0) {
-							//					statusBar.setEnabled(false);
 							messagesTree.setGuestView();
-							setButtonsEnableStatus(false);
+							setButtonsEnableStatus();
 						}
 						else {
-							//							if (!statusBar.isEnabled())
-							//							statusBar.setEnabled(true);
-							//							statusBar.setEnabled(true);
-							// select the first row
-							//							store.commitChanges();
-							if (!QuadCoreForumWeb.SEARCH_STATE)
-							grid.getSelectionModel().select(0, false);
+							if (!QuadCoreForumWeb.SEARCH_STATE) {
+								grid.getSelectionModel().select(0, false);
+							}
 						}
 
 						if (QuadCoreForumWeb.SEARCH_STATE)
@@ -223,12 +369,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 						else
 							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 
-
-						//						/*							if (shouldRefresh) {
-						//System.out.println("shouldddddddddddddddddddddddddddd");
-						//shouldRefresh = false;
-						//toolBar.refresh();
-						//}
 
 					}
 
@@ -249,38 +389,20 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	}
 
 	public void load() {
-		System.out.println("loading threads ... " + subjectID);
-		System.out.println(this.loader);
-		System.out.println((this.grid == null) + " dddddddddddddddddd");
-		System.out.println("111111111111111111111111111111111111 " + proxy);
-		System.out.println("'''''''''''''''''''''''''''''''''' " + Registry.get("NoTabExpand"));
-
 		if (!QuadCoreForumWeb.SEARCH_STATE) {
 			if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") > 0)) {
-				System.out.println("enters and exits");
 				Registry.register("NoTabExpand", ((Long)Registry.get("NoTabExpand") - 1));
-				//					statusBar.setEnabled(true);
 				QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 				return;
 			}
 			else if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") == 0)) {
 				Registry.register("NoTabExpand", null);
-
-				//					statusBar.setEnabled(true);
 				QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 				return;
 			}
 		}
 		
 		
-/*		else if (QuadCoreForumWeb.SEARCH_STATE && !QuadCoreForumWeb.SEARCH_OF_THREADS_NOT_PERFORMED) {
-			System.out.println("gettinggggggggggggggggggggggggggg here");
-			if (QuadCoreForumWeb.SEARCH_STATE_HIT.getSubjectPath().lastElement().getID() == subjectID.getID())
-				QuadCoreForumWeb.SEARCH_OF_THREADS_NOT_PERFORMED = true;
-		}
-		else if (QuadCoreForumWeb.SEARCH_STATE)
-			return;*/
-
 		if (this.subjectID != null && this.subjectID.getID() != -1)
 			this.loader.load(0, 10);
 	}
@@ -357,7 +479,7 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		toolbar.setAlignment(HorizontalAlignment.CENTER);
 
 		threadsPanel.setTopComponent(toolbar);  
-		setButtonsEnableStatus(false);
+		setGuestView();
 	}
 
 
@@ -375,251 +497,6 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 		super.onRender(parent, index);  
 
 		setLayout(new FlowLayout(10));  
-
-
-		initializeProxy();
-		// loader  
-		initializeLoader();
-
-		this.initializeStore();
-
-		this.initializeStatusbar();
-
-		this.initializeGrid();
-
-		this.initializeToolbar();
-
-		threadRowEditor.addListener(Events.AfterEdit, new Listener<RowEditorEvent>() {
-			@Override
-			public void handleEvent(final RowEditorEvent be) {
-				be.setCancelled(true);
-				ThreadModel tSelectedModel = grid.getSelectionModel().getSelectedItem();
-				QuadCoreForumWeb.SERVICE.modifyThread(QuadCoreForumWeb.CONNECTED_USER_DATA.getID(),
-						tSelectedModel.getID(), topicEditorField.getValue(),
-						new AsyncCallback<ThreadModel>() {
-
-					@Override
-					public void onFailure(Throwable caught) {
-						Info.display("Modification error", "Can't modify thread");
-						threadRowEditor.stopEditing(false);
-					}
-
-					@Override
-					public void onSuccess(ThreadModel result) {
-						Info.display("Modification success", "The thread was modified successfully");
-						threadRowEditor.stopEditing(true);
-					}
-				});
-			}
-		});
-
-
-
-
-		grid.addPlugin(threadRowEditor);  
-
-
-		openNewThreadButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
-
-			@Override
-			public void componentSelected(ButtonEvent ce) {
-				AddReplyModifyForm tOpenThread = new AddReplyModifyForm();//(AddReplyModifyForm)Registry.get("AddReply");
-				System.out.println("Opens new threads under " + 
-						AsyncThreadsTableGrid.this.subjectID.getID());
-				tOpenThread.initThreadsOpenningDialog(AsyncThreadsTableGrid.this.subjectID, grid, 
-						store);
-				MainPanel.changeMainViewToPanel(tOpenThread);
-			}
-		});
-
-		modifyThreadButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
-
-			@Override  
-			public void componentSelected(ButtonEvent ce) {
-				if (modifyThreadButton.isPressed()) {
-					threadRowEditor.setEnabled(true);
-					threadRowEditor.stopEditing(false);
-					threadRowEditor.startEditing(store.indexOf(grid.getSelectionModel().getSelectedItem()), true);
-				}
-				else {
-					threadRowEditor.stopEditing(false);
-					threadRowEditor.setEnabled(false);
-				}
-			}
-		}); 
-
-
-
-
-		threadsPanel.layout();
-	}  
-
-	public void setToolBarVisible(boolean value) {
-		if (this.toolbar != null)
-			this.toolbar.setVisible(value);
-		//		this.threadsPanel.layout();
-		//		this.threadsPanel.repaint();
-	}
-
-	public void setButtonsEnableStatus(boolean value) {
-		System.out.println("TTTTTTTTTTTTTTTTTTTTTTJJJJJJJJJJJJJJJJJJJJJJJJJJ " + value );
-		if (openNewThreadButton != null)
-			this.openNewThreadButton.setEnabled(subjectID.getID() != -1);
-		if (modifyThreadButton != null)
-			this.modifyThreadButton.setEnabled(value);		
-
-		if (deleteThreadButton != null)
-			this.deleteThreadButton.setEnabled(value);
-	}
-
-
-	private void initializeGrid() {
-
-
-		List<ColumnConfig> configs = new ArrayList<ColumnConfig>();  
-
-		RowNumberer rn = new RowNumberer();
-		rn.setWidth(30);
-		configs.add(rn);
-
-		topicColumn.setRenderer(new GridCellRenderer<ThreadModel>() {
-
-			@Override
-			public Object render(ThreadModel model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<ThreadModel> store, Grid<ThreadModel> grid) {
-
-				if (rowIndex % 2 == 0)
-					config.style = getColoredRowStyle(config.style);
-				else
-					config.style = getRegularRowStyle(config.style);
-
-				return "<b><a style=\"color: #385F95; text-decoration: none;\" >"
-				+ model.get("topic")
-				+ "</a></b><br /><a style=\"color: #385F95; text-decoration: none;\"> Thread</a>";
-			}
-		});
-
-
-		topicEditorField = new TextField<String>();  
-		topicEditorField.setAllowBlank(false);
-		topicColumn.setEditor(new CellEditor(topicEditorField));  
-
-		topicColumn.setAlignment(HorizontalAlignment.LEFT);  
-		configs.add(topicColumn);  
-
-		ColumnConfig column = new ColumnConfig("responses", "Responses#", 100);  
-		column.setAlignment(HorizontalAlignment.CENTER);  
-
-		column.setRenderer(new GridCellRenderer<ThreadModel>() {
-
-			@Override
-			public Object render(ThreadModel model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<ThreadModel> store, Grid<ThreadModel> grid) {
-
-				if (rowIndex % 2 == 0)
-					config.style = getColoredRowStyle(config.style);
-				else
-					config.style = getRegularRowStyle(config.style);
-
-				return model.get("responses");
-			}
-
-		});
-
-
-		configs.add(column);  
-
-		column = new ColumnConfig("views", "Views#", 100);
-		column.setAlignment(HorizontalAlignment.CENTER);  
-		column.setRenderer(new GridCellRenderer<ThreadModel>() {
-
-			@Override
-			public Object render(ThreadModel model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<ThreadModel> store, Grid<ThreadModel> grid) {
-
-				if (rowIndex % 2 == 0)
-					config.style = getColoredRowStyle(config.style);
-				else
-					config.style = getRegularRowStyle(config.style);
-
-				return model.get("views");
-			}
-
-		});
-
-		configs.add(column);  
-
-		ColumnModel cm = new ColumnModel(configs);  
-
-		threadsPanel = new ContentPanel();  
-
-		threadsPanel.setFrame(false);  
-		threadsPanel.setHeaderVisible(false);
-		threadsPanel.setButtonAlign(HorizontalAlignment.CENTER);  
-		threadsPanel.setLayout(new FitLayout());  
-		threadsPanel.setBottomComponent(statusBar);  
-
-		grid = new Grid<ThreadModel>(store, cm);  
-
-		GridView view = new GridView();
-		view.setEmptyText("The subject has no threads.");
-		grid.setView(view); 
-
-		grid.setAutoExpandMax(3000);
-		grid.setBorders(false);  
-		grid.setAutoExpandColumn("topic");
-
-		grid.getView().setShowDirtyCells(false);
-
-		Listener<BaseEvent> tRowSelectionListener = new Listener<BaseEvent>() {
-			@Override
-			public void handleEvent(BaseEvent be) {
-				System.out.println("row click event .................................. null");
-
-				invokeListenerOperation();
-			}
-		};
-
-		grid.addListener(Events.RowClick, tRowSelectionListener);
-
-		/*
-		grid.addListener(Events.Attach, new Listener<GridEvent<ThreadModel>>() {  
-			public void handleEvent(GridEvent<ThreadModel> be) {  
-				if (subjectID != null && subjectID.getID() != -1) {
-					PagingLoadConfig config = new BasePagingLoadConfig();  
-					config.setOffset(0);  
-					config.setLimit(10);
-
-					Map<String, Object> state = grid.getState();  
-					if (state.containsKey("offset")) {  
-						int offset = (Integer)state.get("offset");  
-						int limit = (Integer)state.get("limit");  
-						config.setOffset(offset);  
-						config.setLimit(limit);  
-					}  
-					System.out.println("atttttttttttttttttttttttttttttttttttttttttttttttttttt");
-					loader.load(config);  
-				}
-			}  
-		});  
-		 */
-
-
-
-		//	grid.setLoadMask(true);
-
-		grid.getSelectionModel().addSelectionChangedListener(new SelectionChangedListener<ThreadModel>() {
-
-			@Override
-			public void selectionChanged(SelectionChangedEvent<ThreadModel> se) {
-				System.out.println("Sel changed");
-				shouldUpdateViews = true;
-				invokeListenerOperation();
-			}
-		});
 
 
 
@@ -652,26 +529,15 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 	}
 
 
-	private String getRowStyle(String style, String color) {
-		int index = style.indexOf("background-color"); 
-		if (index == -1)
-			return style += color;
-		else
-			return style.substring(0, index) + color;
-	}
-
-	private String getRegularRowStyle(String style) {
-		return this.getRowStyle(style, "background-color:#FFFFFF;");
-	}
-	private String getColoredRowStyle(String style) {
-		return this.getRowStyle(style, "background-color:#F5F9EE;");
-	}
-
 	private void invokeListenerOperation() {
-		System.out.println("sssssssssssssssssssssssssss ");
 		if (subjectID != null && grid.getSelectionModel() != null &&
 				grid.getSelectionModel().getSelectedItem() != null) {
-			setButtonsEnableStatus(true);
+			
+			if (QuadCoreForumWeb.SEARCH_STATE &&
+					QuadCoreForumWeb.SEARCH_STATE_HIT.getContainingThread().getID() != grid.getSelectionModel().getSelectedItem().getID()) return;
+
+			
+			setButtonsEnableStatus();
 			
 			
 			final ThreadModel tSelectedThread = grid.getSelectionModel().getSelectedItem();
@@ -682,14 +548,12 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 
 				@Override
 				public void onFailure(Throwable caught) {
-					System.out.println("pppppppppppppppppppppppppppppppppooooooooooooooooooooooooooooooooooo");
 					loader.load();
 				}
 
 				@Override
 				public void onSuccess(ThreadModel result) {
 					if (QuadCoreForumWeb.SEARCH_STATE) return;
-					System.out.println("iooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooook");
 					tSelectedThread.setTopic(result.getTopic());
 					tSelectedThread.setResponsesNumber(result.getResponsesNumber());
 					tSelectedThread.setViewsNumber(result.getViewsNumber());
@@ -698,11 +562,10 @@ public class AsyncThreadsTableGrid extends LayoutContainer {
 				}
 			});
 		}
-		else
-			setButtonsEnableStatus(false);
+		else if (grid != null && grid.getSelectionModel() != null)
+			setButtonsEnableStatus();
+
 		if (messagesTree != null) {
-			//		System.out.println("row click event .................................. "  +
-			//				grid.getSelectionModel().getSelectedItem().getId());
 			if (grid != null && grid.getSelectionModel() != null && grid.getSelectionModel().getSelectedItem() != null)
 				messagesTree.changeThreadID(grid.getSelectionModel().getSelectedItem().getID(), false);
 		}

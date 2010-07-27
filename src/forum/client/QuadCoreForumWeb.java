@@ -2,6 +2,7 @@ package forum.client;
 
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
@@ -42,6 +43,8 @@ public class QuadCoreForumWeb implements EntryPoint {
 
 //	public static boolean SEARCH_OF_THREADS_NOT_PERFORMED = true;
 	public static boolean SEARCH_STATE = false;
+	public static boolean SEARCHING_MESSAGES = false;
+
 	public static SearchHitModel SEARCH_STATE_HIT = null;
 	
 	private MainPanel mainPanel;
@@ -57,7 +60,7 @@ public class QuadCoreForumWeb implements EntryPoint {
 	public void onModuleLoad() {
 		
 		Registry.register("Servlet", SERVICE);
-		Registry.register("RegistrationForm", new RegistrationForm());
+		Registry.register("RegistrationForm", new RegistrationAndProfileForm());
 		
 		Window.addWindowClosingHandler(new Window.ClosingHandler() {
 			@Override
@@ -151,8 +154,12 @@ public class QuadCoreForumWeb implements EntryPoint {
 						if (QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST)
 							QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(true);
 						String message = "";
-						for (String tName : result.getActiveNames())
-							message += tName + "\n";
+						Iterator<String> tIter = result.getActiveNames().iterator();
+						int i = 1;
+						while (tIter.hasNext()) {
+							message += i + ") " + tIter.next() + "<br>";
+							i++;
+						}
 						MessageBox.info("Connected users", message, null);
 					}
 				});

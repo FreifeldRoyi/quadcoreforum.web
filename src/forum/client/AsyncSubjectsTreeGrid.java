@@ -6,7 +6,6 @@ import java.util.Stack;
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.Style.Scroll;
-import com.extjs.gxt.ui.client.core.XTemplate;
 import com.extjs.gxt.ui.client.data.BaseTreeLoader;
 import com.extjs.gxt.ui.client.data.ModelKeyProvider;
 import com.extjs.gxt.ui.client.data.ModelStringProvider;
@@ -30,12 +29,10 @@ import com.extjs.gxt.ui.client.widget.MessageBox;
 import com.extjs.gxt.ui.client.widget.TabItem;
 import com.extjs.gxt.ui.client.widget.TabPanel;
 import com.extjs.gxt.ui.client.widget.button.Button;
-import com.extjs.gxt.ui.client.widget.grid.RowExpander;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.menu.SeparatorMenuItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.extjs.gxt.ui.client.widget.treepanel.TreePanel;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -225,17 +222,6 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 					MessageBox.confirm("Confirm", "Are you sure you want to delete the subject?", tDeleteListener);  
 
 					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-
-					
 				}
 			}
 				
@@ -265,12 +251,6 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 						callback.onSuccess(result);
 						((Button)Registry.get("RefreshRootSubjectsButton")).setIcon(IconHelper.createStyle("subjectsRefresh"));
 
-						//						System.out.println("pppppppppppppppppppppppppppppp");
-//						if (loadConfig == null)
-//							tree.getSelectionModel().select(0, false);
-						//					if (store.getAllItems().size() > 0) {
-
-						//				}
 
 					}
 				};
@@ -295,9 +275,6 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 
 		tree = new TreePanel<SubjectModel>(store);  
-
-		
-		
 		
 		Registry.register("SubjectsTree", tree);
 
@@ -328,7 +305,6 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 					QuadCoreForumWeb.WORKING_STATUS.setBusy("Retrieving subjects...");
 
 					final SubjectModel toUpdate = be.getItem();
-					//					tree.getSelectionModel().select(toUpdate, false);
 
 					service.getSubjectByID(be.getItem().getID(), new AsyncCallback<SubjectModel>() {
 						@Override
@@ -346,8 +322,7 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 							toUpdate.setMessagesNumber(Long.parseLong(result.getMessagesNumber()));
 							store.update(toUpdate);
 							store.commitChanges();
-							SubjectTabItem tTabItem =
-								(SubjectTabItem)mainPanel.getItemByItemId(toUpdate.getID() + "");
+							SubjectTabItem tTabItem = (SubjectTabItem)mainPanel.getItemByItemId(toUpdate.getID() + "");
 							if (tTabItem != null)
 								tTabItem.updateTabTitle();
 							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
@@ -363,9 +338,11 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 
 			@Override
 			public void handleEvent(BaseEvent be) {
-				SubjectModel tSelected = tree.getSelectionModel().getSelectedItem();
+				QuadCoreForumWeb.SEARCH_STATE = false;
+				QuadCoreForumWeb.SEARCHING_MESSAGES = false;
 				
-				System.out.println("opennnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
+				
+				SubjectModel tSelected = tree.getSelectionModel().getSelectedItem();
 				
 				if (tSelected != null) {
 					QuadCoreForumWeb.WORKING_STATUS.setBusy("Retrieving subjects...");
@@ -384,15 +361,6 @@ public class AsyncSubjectsTreeGrid extends LayoutContainer {
 					while (tSelected  != null) {
 						if ((tCurrentItem = mainPanel.getItemByItemId(tSelected.getID() + "")) == null) {
 							final TabItem tNewItem = new SubjectTabItem(tSelected);
-							tNewItem.addListener(Events.Select, new Listener<BaseEvent>() {
-
-								@Override
-								public void handleEvent(BaseEvent be) {
-									System.out.println("SubjectTabItem.this " + ((SubjectTabItem)tNewItem).getSubject().getID());
-										
-									
-								}
-							});
 							tStack.push(tNewItem);
 							
 					}
