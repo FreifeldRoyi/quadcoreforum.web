@@ -216,7 +216,6 @@ public class PromoteUsersWindow extends LayoutContainer
 	
 	public void loadUsers()
 	{
-		System.out.println("loading all users");
 		QuadCoreForumWeb.SERVICE.getUsers(new AsyncCallback<List<UserModel>>() 
 		{
 				@Override

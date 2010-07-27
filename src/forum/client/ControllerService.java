@@ -50,22 +50,8 @@ public interface ControllerService extends RemoteService {
 			id) throws MessageNotFoundException, DatabaseRetrievalException;
 
 
-	/*	public ServerResponse getMemberDetails(final long memberID) {
-
-	}
-
-		public abstract void recoverPassword(final String username, final String email, final String password, final Component comp);
-
-		public abstract void changePassword(final long memberID, final String prevPassword, final String newPassword, 
-				final boolean shouldAskNewPassword, final Component comp);
-
-		public abstract void updateMemberDetails(final Component comp, final long memberID, final String username,
-				final String firstName, final String lastName, final String email);
-
-		public abstract void registerToForum(final Component comp, String username, String password, 
-				String email, String firstName, String lastName);
-	 */	
-
+	public UserModel updateMemberProfile(final long id, final String username, final String firstName, final String lastName, final String email) 
+	throws NotRegisteredException, MemberAlreadyExistsException, DatabaseUpdateException;
 
 	public UserModel login(long guestID, String username, String password) throws 
 	NotRegisteredException, WrongPasswordException, DatabaseRetrievalException;

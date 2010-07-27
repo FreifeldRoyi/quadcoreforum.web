@@ -21,18 +21,15 @@ import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedListener;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.event.TreeGridEvent;
-import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.store.TreeStore;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.Info;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.MessageBox;
+import com.extjs.gxt.ui.client.widget.Window;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
-import com.extjs.gxt.ui.client.widget.grid.ColumnData;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
-import com.extjs.gxt.ui.client.widget.grid.Grid;
-import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
 import com.extjs.gxt.ui.client.widget.grid.RowExpander;
 import com.extjs.gxt.ui.client.widget.grid.RowNumberer;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
@@ -52,19 +49,15 @@ import forum.shared.exceptions.user.NotRegisteredException;
 
 public class AsyncMessagesTreeGrid extends LayoutContainer {  
 
-	private final ControllerServiceAsync service = (ControllerServiceAsync) Registry.get("Servlet");
+	private ContentPanel messagesPanel;
 
 	private Button replyButton;
 	private Button deleteButton; 
 	private Button modifyButton;
 
-	private ContentPanel messagesPanel;
-
 	private TreeGrid<MessageModel> tree;
 	private TreeLoader<MessageModel> loader;
 	private TreeStore<MessageModel> store;
-
-	private long threadID;
 
 	private RowExpander expander;
 
@@ -72,103 +65,73 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 	private ToolBar toolbar;
 
+	private long threadID;
 	private boolean selectionChanged;
 
+
+	private SelectionChangedListener<MessageModel> selectionChangedListener;
+	private Listener<TreeGridEvent<MessageModel>> updateListener;
+
+	private ColumnModel columnModel;
+
+	private MessageModel currentInTree;
+
+
+	/**
+	 * The class constructor
+	 * 
+	 * @param threadsTable
+	 * 		The top threads table of this messages tree
+	 */
 	public AsyncMessagesTreeGrid(AsyncThreadsTableGrid threadsTable) {
 		this.threadsTable = threadsTable;
 		this.threadID = -1;
-	}
-
-
-	public void changeThreadID(long threadID, boolean selectionChanged) {
-		this.selectionChanged = selectionChanged;
-		System.out.println("Changing threadIDdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
-		this.threadID = threadID;
-		if (loader != null)
-			loader.load(null);
-	}
-
-	private String getColoredRowStyle(String style) {
-		return this.getRowStyle(style, "background-color:#F5F9EE;");
-	}
-
-	private String getRegularRowStyle(String style) {
-		return this.getRowStyle(style, "background-color:#FFFFFF;");
-	}
-
-	private String getRowStyle(String style, String color) {
-		int index = style.indexOf("background-color"); 
-		if (index == -1)
-			return style += color;
-		else
-			return style.substring(0, index) + color;
-	}
-
-	@Override  
-	protected void onRender(Element parent, int index) {  
-		super.onRender(parent, index);  
-
-		setLayout(new FitLayout());
 
 		messagesPanel = new ContentPanel();
 		messagesPanel.setBodyBorder(false);
-
 		messagesPanel.setHeading("Messages");
-
 		messagesPanel.setButtonAlign(HorizontalAlignment.CENTER);  
-
-		//		cp.setHeight(600);
-
 		messagesPanel.setLayout(new FitLayout());
-
 		messagesPanel.setFrame(false);  
 
 		// data proxy  
 		RpcProxy<List<MessageModel>> proxy = new RpcProxy<List<MessageModel>>() {  
-
 			@Override
 			protected void load(final Object loadConfig, final
 					AsyncCallback<List<MessageModel>> callback) {
-
 				final AsyncCallback<List<MessageModel>> tNewCallback = new AsyncCallback<List<MessageModel>>() {
-
 					@Override
 					public void onFailure(Throwable caught) {
 						loader.load(loadConfig);
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
-
 					@Override
 					public void onSuccess(List<MessageModel> result) {
 						callback.onSuccess(result);
 						if (result.size() > 0) {
 							if (QuadCoreForumWeb.SEARCH_STATE) {
-								System.out.println("ssssssssssssssssstateeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
-								System.out.println("dsdsddsdsdsdsd");
-								loadMessages();
+								loadMessages3();
 							}
-							else
-								tree.getSelectionModel().select(0, false);
+							else {// if (!QuadCoreForumWeb.AFTER_SEARCH_STATE) {
 
+								tree.getSelectionModel().select(0, false);
+							}
 						}
 						else if (result.size() == 0) {
-							setGuestView();
+							setButtonsEnableStatus(true);
 							if (QuadCoreForumWeb.SEARCH_STATE) {
-								// TODO:
+								Info.display("Not found", "Could not found message");
 							}
 						}
 						QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
 					}
 				};
-
-				if (threadID != -1) {
+				if (threadID != -1) {//&& !QuadCoreForumWeb.AFTER_SEARCH_STATE) {
 					QuadCoreForumWeb.WORKING_STATUS.setBusy("Loading messages...");
-					service.getReplies(threadID, (MessageModel) loadConfig, selectionChanged, tNewCallback);
+					QuadCoreForumWeb.SERVICE.getReplies(threadID, (MessageModel) loadConfig, selectionChanged, tNewCallback);
 				}
-
 			} 
 		};  	
-
 
 		// tree loader  
 		loader = new BaseTreeLoader<MessageModel>(proxy) {  
@@ -200,71 +163,21 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 		ColumnConfig name = new ColumnConfig("display", "Name", 800);  
 		name.setRenderer(new TreeGridCellRenderer<MessageModel>());
-/*		name.setRenderer(new TreeGridCellRenderer<MessageModel>() {
-
-			@Override
-			public Object render(MessageModel model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<MessageModel> store,
-					Grid<MessageModel> grid) {
-				if (rowIndex % 2 == 0)
-					config.style = getColoredRowStyle(config.style);
-				else
-					config.style = getRegularRowStyle(config.style);
-				return super.render(model, property, config, rowIndex, colIndex, store, grid);
-			}
-		});*/
 
 		ColumnConfig date = new ColumnConfig("date", "Date", 180);  
 		date.setDateTimeFormat(DateTimeFormat.getMediumDateTimeFormat());  
 		date.setRenderer(null);
-/*		date.setRenderer(new GridCellRenderer<MessageModel>() {
-
-			@Override
-			public Object render(MessageModel model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<MessageModel> store,
-					Grid<MessageModel> grid) {
-				if (rowIndex % 2 == 0)
-					config.style = getColoredRowStyle(config.style);
-				else
-					config.style = getRegularRowStyle(config.style);
-
-				return model.get("date");
-
-
-			}
-		});
-*/
-
-
-		ColumnModel cm = new ColumnModel(Arrays.asList(tNumberer, expander, name, date));  
-
+		columnModel = new ColumnModel(Arrays.asList(tNumberer, expander, name, date));  
 
 		store = new TreeStore<MessageModel>(loader);  
-
-		tree = new TreeGrid<MessageModel>(store, cm);  
-
+		tree = new TreeGrid<MessageModel>(store, columnModel);  
 		tree.setStripeRows(true);
-
-
-
 		tree.addPlugin(expander);  
-
 		tree.getView().setAutoFill(true);  
-
 		tree.getTreeView().setBufferEnabled(false); 
-
-
-
 		tree.setStateful(true);  
-
 		tree.setLoadMask(true);
-
 		tree.setId("messagestable");  
-
-
-
 
 		store.setKeyProvider(new ModelKeyProvider<MessageModel>() {  
 			public String getKey(MessageModel model) {  
@@ -272,60 +185,58 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 			}  
 		});  
 
-
-		Listener<TreeGridEvent<MessageModel>> tUpdateListener =
-			new Listener<TreeGridEvent<MessageModel>>() {  
+		updateListener = new Listener<TreeGridEvent<MessageModel>>() {  
 			public void handleEvent(final TreeGridEvent<MessageModel> be) {  
-				if (!QuadCoreForumWeb.SEARCH_STATE) {
+				//				if (!QuadCoreForumWeb.SEARCH_STATE) {
 				if (be.getModel() != null) {
 					invokeExpansionOperation(be.getModel());
 				}
 				else
 					setGuestView();
-
-			}  
+				//				}
 			}
 		};
 
-
-
-		// change in node check state  
-		tree.addListener(Events.Expand, tUpdateListener);  
-
-		// change in node check state  
-		tree.addListener(Events.Collapse, tUpdateListener);  
-
-
-		tree.getSelectionModel().addSelectionChangedListener(new SelectionChangedListener<MessageModel>() {
-
+		selectionChangedListener = new SelectionChangedListener<MessageModel>() {
 			@Override
 			public void selectionChanged(SelectionChangedEvent<MessageModel> se) {
-				if (!QuadCoreForumWeb.SEARCH_STATE) {
+				//			if (!QuadCoreForumWeb.SEARCH_STATE) {
 				if (se.getSelectedItem() != null) {
 					invokeSelectListenerOperation(se.getSelectedItem());
 				}
 				else
 					setGuestView();
+				//		}
+			}
+		};
 
+
+		tree.addListener(Events.OnMouseDown, new Listener<BaseEvent>() {
+			@Override
+			public void handleEvent(BaseEvent be) {
+				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
+				if (tSelected == null) 
+					return;
+				else {
+					QuadCoreForumWeb.SEARCH_STATE = false;
+					QuadCoreForumWeb.SEARCHING_MESSAGES = false;
+					allowReplyModifyDeleteButtons(tSelected);
+				}
 			}
-			}
+
 		});
+		// change in node check state  
+		tree.addListener(Events.Expand, updateListener);  
+		// change in node check state  
+		tree.addListener(Events.Collapse, updateListener);  
 
+		tree.getSelectionModel().addSelectionChangedListener(selectionChangedListener);
 		tree.setCaching(false);
-
 		tree.setBorders(true);  
-		//     tree.getStyle().setLeafIcon(IconHelper.createStyle("icon-page"));  
-
-
 		tree.setAutoExpandColumn("display");
-
 		tree.setAutoExpandMax(3000);
-
-
 		tree.getView().setEmptyText("No messages are available");
-
 		tree.setTrackMouseOver(true);  
-
 		tree.getTreeView().setSortingEnabled(false);
 		tree.getTreeView().setRowHeight(40);
 		messagesPanel.setScrollMode(Scroll.AUTOY);
@@ -333,24 +244,70 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 		messagesPanel.add(tree);
 		setScrollMode(Scroll.AUTOY);
 		add(messagesPanel);  
-
 		initializeToolbar();
 
 	}
 
-	private void notFound() {
-		System.out.println("nnnnnnnnnnnnnnnnnnnnn");
-		QuadCoreForumWeb.SEARCH_STATE = false;
+	/**
+	 * Changes the id of the current shown thread and updates the loader to load
+	 * its messages
+	 * 
+	 * @param threadID
+	 * 		The id of the new thread
+	 * @param selectionChanged
+	 * 		Whether the number of the thread views should be updated
+	 */
+	public void changeThreadID(long threadID, boolean selectionChanged) {
+		this.selectionChanged = selectionChanged;
+		this.threadID = threadID;
+		if (loader != null)
+			loader.load(null);
 	}
-	
-	private void loadMessages() {
-		if (threadID != QuadCoreForumWeb.SEARCH_STATE_HIT.getContainingThread().getID())
-			return;
-		tree.collapseAll();
+
+	@Override  
+	protected void onRender(Element parent, int index) {  
+		super.onRender(parent, index);  
+		setLayout(new FitLayout());
+
+	}
+
+	private void notFound() {
+		QuadCoreForumWeb.SEARCH_STATE = false;
+		MessageBox.alert("Not found", "The required message not found", null);
+	}
+
+
+	private void loadOtherMessages() {
+		RpcProxy<List<MessageModel>> tProxy = new RpcProxy<List<MessageModel>>() {
+			@Override
+			protected void load(Object loadConfig,
+					AsyncCallback<List<MessageModel>> callback) {
+				QuadCoreForumWeb.SERVICE.getReplies(threadID, (MessageModel) loadConfig, selectionChanged, callback);
+			}
+		};
+		// tree loader  
+		BaseTreeLoader<MessageModel> tLoader = new BaseTreeLoader<MessageModel>(tProxy) {  
+			@Override  
+			public boolean hasChildren(MessageModel parent) {
+				return true;
+			}
+		};  
+		TreeStore<MessageModel> tStore = new TreeStore<MessageModel>(tLoader);  
+		tStore.setKeyProvider(new ModelKeyProvider<MessageModel>() {  
+			public String getKey(MessageModel model) {  
+				return model.getID() + "";  
+			}  
+		});  
+		final TreeGrid<MessageModel> tTree = new TreeGrid<MessageModel>(tStore, columnModel);
+
+
+		tTree.collapseAll();
+		tStore.add(store.getRootItems(), false);
+		tStore.commitChanges();
+
 		final Stack<MessageModel> tMessagesPath = new Stack<MessageModel>();
 		final Stack<MessageModel> tTempStack = new Stack<MessageModel>();
 
-		System.out.println("123777777777777777777777777777777777");
 		Stack<MessageModel> tRealMessagesPath = (Stack<MessageModel>) 
 		QuadCoreForumWeb.SEARCH_STATE_HIT.getMessagePath();
 
@@ -362,31 +319,176 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 			tMessagesPath.push(tCurrent);
 			tRealMessagesPath.push(tCurrent);
 		}
-		
+
 		Listener<BaseEvent> tExpandListener = new Listener<BaseEvent>() {
 			@Override
 			public void handleEvent(BaseEvent be) {
 				MessageModel tCurrent = tMessagesPath.pop();
 
-				MessageModel tCurrentInTree = tree.getStore().findModel(tCurrent);
+				MessageModel tCurrentInTree = tTree.getStore().findModel(tCurrent);
 				if (tCurrentInTree == null) {
-					tree.removeListener(Events.Expand, this);
-					System.out.println("123444444444444444444444444444444444444444444444444444");
+					tTree.removeListener(Events.Expand, this);
 					notFound();
 				}
 				else if (tMessagesPath.isEmpty()) {
-					System.out.println("12399999999999999999999999999999999999999");
-					System.out.println("tcurent model 999999999999 " 
-							+ tCurrentInTree.getID() + " expanded: " + tree.isExpanded(tCurrentInTree));
-					tree.removeListener(Events.Expand, this);
-					tree.getSelectionModel().select(tCurrentInTree, false);
+					tTree.removeListener(Events.Expand, this);
+					tTree.getSelectionModel().select(tCurrentInTree, false);
 					//tree.getSelectionModel().select(tCurrentInTree, false);
 					QuadCoreForumWeb.SEARCH_STATE = false;
 					//MainPanel.changeMainViewToSubjectsAndThreads();
-					System.out.println("LOADING MESSAGE COMPLETED");
+
+					/*				tree.addListener(Events.Expand, updateListener);  
+					tree.addListener(Events.Collapse, updateListener);  
+					tree.getSelectionModel().addSelectionChangedListener(selectionChangedListener);
+					 */
+
 				}
 				else {
-					tree.setExpanded(tCurrentInTree, true);
+					tTree.setExpanded(tCurrentInTree, true);
+				}
+			}
+		};
+
+		tTree.addListener(Events.Expand, tExpandListener); 
+
+		MessageModel tCurrent = tMessagesPath.pop();
+		MessageModel tCurrentInTree = tTree.getStore().findModel(tCurrent);
+		if (tCurrentInTree == null) {
+			MessageBox.alert("rror", "sdsd", null);
+			tTree.removeListener(Events.Expand, tExpandListener);
+			notFound();
+		}
+		else if (tMessagesPath.isEmpty()) {
+			tTree.removeListener(Events.Expand, tExpandListener);
+			tTree.getSelectionModel().select(tCurrentInTree, false);
+			QuadCoreForumWeb.SEARCH_STATE = false;
+			/*			tree.addListener(Events.Expand, updateListener);  
+			tree.addListener(Events.Collapse, updateListener);  
+			tree.getSelectionModel().addSelectionChangedListener(selectionChangedListener);
+			 */
+		}
+		else {
+			tTree.setExpanded(tCurrentInTree, true);
+		}
+
+
+		ContentPanel tNewPanel = new ContentPanel();
+		tNewPanel.setLayout(new FitLayout());
+		tNewPanel.add(tTree);
+		Window tWin = new Window();
+		tWin.setLayout(new FitLayout());
+		tWin.add(tNewPanel);
+		tWin.show();
+	}
+
+
+
+	private void loadMessages3() {
+		if (threadID != QuadCoreForumWeb.SEARCH_STATE_HIT.getContainingThread().getID())
+			return;
+
+		if (!QuadCoreForumWeb.SEARCHING_MESSAGES)
+			QuadCoreForumWeb.SEARCHING_MESSAGES = true;
+		else
+			return;
+
+
+		currentInTree = null;
+
+		tree.addListener(Events.Expand, new Listener<BaseEvent>() {
+			@Override
+			public void handleEvent(BaseEvent be) {
+				if (currentInTree == null) {
+					currentInTree = 
+						store.findModel(((Stack<MessageModel>)QuadCoreForumWeb.SEARCH_STATE_HIT.getMessagePath()).firstElement());
+					if (currentInTree != null) {
+						tree.getSelectionModel().select(currentInTree, false);
+					}
+				}
+			}
+		});
+
+		tree.expandAll();
+	}
+
+	private void loadMessages() {
+		if (threadID != QuadCoreForumWeb.SEARCH_STATE_HIT.getContainingThread().getID())
+			return;
+
+
+		if (!QuadCoreForumWeb.SEARCHING_MESSAGES)
+			QuadCoreForumWeb.SEARCHING_MESSAGES = true;
+		else
+			return;
+
+		tree.clearState();
+
+		//	loadOtherMessages();
+		//if (1==1) return;
+
+		/*		tree.removeListener(Events.Expand, updateListener);  
+		tree.removeListener(Events.Collapse, updateListener);  
+		tree.getSelectionModel().removeSelectionListener(selectionChangedListener);
+		 */
+
+
+
+		//		tree.collapseAll();
+
+		final Stack<MessageModel> tMessagesPath = new Stack<MessageModel>();
+		final Stack<MessageModel> tTempStack = new Stack<MessageModel>();
+
+		Stack<MessageModel> tRealMessagesPath = (Stack<MessageModel>) 
+		QuadCoreForumWeb.SEARCH_STATE_HIT.getMessagePath();
+
+		while (!tRealMessagesPath.isEmpty()) {
+			tTempStack.push(tRealMessagesPath.pop());
+		}
+		while (!tTempStack.isEmpty()) {
+			MessageModel tCurrent = tTempStack.pop();
+			tMessagesPath.push(tCurrent);
+			tRealMessagesPath.push(tCurrent);
+		}
+
+
+		currentInTree = null;
+
+		Listener<BaseEvent> tExpandListener = new Listener<BaseEvent>() {
+			@Override
+			public void handleEvent(BaseEvent be) {
+
+
+
+				MessageModel tCurrent = tMessagesPath.pop();
+
+
+				currentInTree = tree.getStore().findModel(tCurrent);
+				if (currentInTree == null) {
+					tree.removeListener(Events.Expand, this);
+					notFound();
+				}
+				else if (tMessagesPath.isEmpty()) {
+					//					QuadCoreForumWeb.AFTER_SEARCH_STATE = true;
+
+					tree.removeListener(Events.Expand, this);
+					tree.setExpanded(currentInTree, false);
+
+					tree.getSelectionModel().select(currentInTree, false);
+
+
+					//tree.getSelectionModel().select(tCurrentInTree, false);
+
+					QuadCoreForumWeb.SEARCH_STATE = false;
+					//MainPanel.changeMainViewToSubjectsAndThreads();
+
+					/*				tree.addListener(Events.Expand, updateListener);  
+					tree.addListener(Events.Collapse, updateListener);  
+					tree.getSelectionModel().addSelectionChangedListener(selectionChangedListener);
+					 */
+
+				}
+				else {
+					tree.setExpanded(currentInTree, true);
 				}
 			}
 		};
@@ -395,45 +497,50 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 
 
 		MessageModel tCurrent = tMessagesPath.pop();
-		System.out.println("it is "  + tCurrent.getID());
-		System.out.println("and in store " + tree.getStore().getAt(0).getID());
-		MessageModel tCurrentInTree = tree.getStore().findModel(tCurrent);
-		if (tCurrentInTree == null) {
-			System.out.println("trying to find " + tCurrent.getID() + "  " + tCurrent.getTitle());
+		currentInTree = tree.getStore().findModel(tCurrent);
+
+
+
+		if (currentInTree == null) {
 			tree.removeListener(Events.Expand, tExpandListener);
 			notFound();
 		}
 		else if (tMessagesPath.isEmpty()) {
-			tree.removeListener(Events.Expand, tExpandListener);
-			tree.getSelectionModel().select(tCurrentInTree, false);
-			System.out.println("required is  sssssssssssssssss" + tCurrentInTree.getID());
-			System.out.println("LOADING MESSAGE COMPLETED");
-			QuadCoreForumWeb.SEARCH_STATE = false;
+			//			QuadCoreForumWeb.AFTER_SEARCH_STATE = true;
 
-			//MainPanel.changeMainViewToSubjectsAndThreads();
+			tree.removeListener(Events.Expand, tExpandListener);
+			tree.setExpanded(currentInTree, false);
+			tree.getSelectionModel().select(currentInTree, false);
+			QuadCoreForumWeb.SEARCH_STATE = false;
+			/*			tree.addListener(Events.Expand, updateListener);  
+			tree.addListener(Events.Collapse, updateListener);  
+			tree.getSelectionModel().addSelectionChangedListener(selectionChangedListener);
+			 */
 		}
 		else {
-			tree.setExpanded(tCurrentInTree, true);
+			tree.setExpanded(currentInTree, true);
+
 		}
 	}
 
 	private void invokeSelectListenerOperation(final MessageModel model) {
-		service.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
+		if (!QuadCoreForumWeb.SEARCHING_MESSAGES) {
 
-			@Override
-			public void onFailure(Throwable caught) { /* do nothing - the expand listener will delete the row */ }
+			QuadCoreForumWeb.SERVICE.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
 
-			@Override
-			public void onSuccess(MessageModel result) {
-				System.out.println("notifying selection of resultttttttttttttttttttttttttttttttt " + result.getID());
-				model.setTitle(result.getTitle());
-				model.setContent(result.getContent());
-				model.setDate(result.getDate());
-				store.update(model);
-				store.commitChanges();
+				@Override
+				public void onFailure(Throwable caught) { /* do nothing - the expand listener will delete the row */ }
 
-				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
+				@Override
+				public void onSuccess(MessageModel result) {
+					model.setTitle(result.getTitle());
+					model.setContent(result.getContent());
+					model.setDate(result.getDate());
+					store.update(model);
+					store.commitChanges();
 
+					//				MessageModel tSelected = tree.getSelectionModel().getSelectedItem();
+					/*
 				if (tSelected != null) {
 					com.google.gwt.dom.client.Element tRow = tree.getTreeView().getRow(tSelected);
 					if (tRow != null)
@@ -441,59 +548,57 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 					allowReplyModifyDeleteButtons(tSelected);
 
 				}
-			}
-		});
+					 */
+				}
+			});
+			allowReplyModifyDeleteButtons(model);
+		}
 	}
 
 
 	private void invokeExpansionOperation(final MessageModel model) {
-		service.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
 
-			@Override
-			public void onFailure(Throwable caught) { /* do nothing - the expand listener will delete the row */ }
+		if (!QuadCoreForumWeb.SEARCHING_MESSAGES) {
 
-			@Override
-			public void onSuccess(MessageModel result) {
-				model.setTitle(result.getTitle());
-				model.setContent(result.getContent());
-				model.setDate(result.getDate());
-				store.update(model);
+			QuadCoreForumWeb.SERVICE.getMessageByID(model.getID(), new AsyncCallback<MessageModel>() {
 
+				@Override
+				public void onFailure(Throwable caught) { /* do nothing - the expand listener will delete the row */ }
 
-				System.out.println("pppppppppppppppppppppppppppppppppppp");
-				store.commitChanges();
+				@Override
+				public void onSuccess(MessageModel result) {
+					model.setTitle(result.getTitle());
+					model.setContent(result.getContent());
+					model.setDate(result.getDate());
+					store.update(model);
 
-				/*				if (tSelected != null) {
+					store.commitChanges();
+
+					/*				if (tSelected != null) {
 					com.google.gwt.dom.client.Element tRow = tree.getTreeView().getRow(tSelected);
 					if (tRow != null)
 						expander.expandRow(tree.getView().findRowIndex(tRow));
 					allowReplyModifyDeleteButtons(tSelected);
 
 				}
-				 */
+					 */
+				}
+			});
 
-			}
-		});
+			allowReplyModifyDeleteButtons(model);
+
+
+		}		
+
+
 	}
-
 
 	public void setToolBarVisible(boolean value) {
 		if (this.toolbar != null)
 			this.toolbar.setVisible(value);
-		this.messagesPanel.layout();
-
-		messagesPanel.fireEvent(Events.Resize);
-		tree.fireEvent(Events.Resize);
-		fireEvent(Events.Resize);
-		/*		messagesPanel.add(tree);
-		setScrollMode(Scroll.AUTOY);
-		add(messagesPanel);  
-		 */
-
 	}
 
 	public void setGuestView() {
-		System.out.println("guests viewwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
 		if (replyButton != null)
 			replyButton.setEnabled(false);
 		if (deleteButton != null)
@@ -510,8 +615,9 @@ public class AsyncMessagesTreeGrid extends LayoutContainer {
 	}
 
 	private void allowReplyModifyDeleteButtons(MessageModel selected) {
-		if (selected == null || QuadCoreForumWeb.CONNECTED_USER_DATA == null)
+		if (selected == null || QuadCoreForumWeb.CONNECTED_USER_DATA == null) {
 			setGuestView();
+		}
 		else {
 			UserType tType = QuadCoreForumWeb.CONNECTED_USER_DATA.getType();
 			replyButton.setEnabled(true);

@@ -70,13 +70,13 @@ public class UsersController {
 			permissions.add(forum.shared.Permission.valueOf(tCurrentPermission.toString()));
 		return new UserModel(user.getID(), permissions);
 	}
-	
+
 	private UserModel memberToUserModelConverter(UIMember member)
 	{
 		Collection<forum.shared.Permission> permission = new ArrayList<forum.shared.Permission>();
 		for (Permission tCurrentPermission : member.getPermissions())
 			permission.add(forum.shared.Permission.valueOf(tCurrentPermission.toString()));
-		
+
 		String type = "";
 		if (member.isAllowed(Permission.SET_MODERATOR))
 			type = "ADMIN";
@@ -84,7 +84,7 @@ public class UsersController {
 			type = "MODERATOR";
 		else
 			type = "MEMBER";
-		
+
 		return new UserModel(member.getID(),member.getUsername(),
 				member.getLastName(), member.getFirstName(),
 				member.getEmail(), type, permission);
@@ -139,7 +139,7 @@ public class UsersController {
 		}
 	}
 
-	
+
 	public UserModel login(long guestID, String username, String password) throws 
 	NotRegisteredException, WrongPasswordException, DatabaseRetrievalException {
 		try {
@@ -184,8 +184,8 @@ public class UsersController {
 		try
 		{
 			Collection<UIMember> tUsers = this.facade.getAllMembers();
-			
-			
+
+
 			for (UIMember member : tUsers)
 			{
 				toReturn.add(this.memberToUserModelConverter(member));
@@ -195,7 +195,7 @@ public class UsersController {
 		{
 			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 		}
-		
+
 		return toReturn;
 	}
 
@@ -235,7 +235,7 @@ public class UsersController {
 		catch (NotPermittedException e) 
 		{
 			throw new forum.shared.exceptions.user.NotPermittedException(e.getUserID(), 
-				forum.shared.Permission.valueOf(e.getPermission().toString()));
+					forum.shared.Permission.valueOf(e.getPermission().toString()));
 		} 
 		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
 		{
@@ -246,4 +246,24 @@ public class UsersController {
 			throw new DatabaseRetrievalException();
 		}		
 	}
+
+	public UserModel updateMemberProfile(final long id, final String username, 
+			final String firstName, final String lastName, final String email) 
+	throws NotRegisteredException, forum.shared.exceptions.user.MemberAlreadyExistsException, 
+	forum.shared.exceptions.database.DatabaseUpdateException {
+		try {
+			return memberToUserModelConverter(facade.updateMemberProfile(id, username, null, 
+					lastName, firstName, email, false));
+		} 
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) {
+			throw new NotRegisteredException(e.getUserID());
+		}
+		catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.MemberAlreadyExistsException e) {
+			throw new forum.shared.exceptions.user.MemberAlreadyExistsException(e.getMessage());
+		}
+		catch (forum.server.updatedpersistentlayer.DatabaseUpdateException e) {
+			throw new forum.shared.exceptions.database.DatabaseUpdateException();
+		}
+	}
+
 }

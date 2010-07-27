@@ -27,7 +27,6 @@ import com.extjs.gxt.ui.client.widget.treepanel.TreePanel;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import forum.shared.MessageModel;
 import forum.shared.SearchHitModel;
 import forum.shared.SubjectModel;
 
@@ -78,8 +77,6 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		tContent.add(this.grid);
 		this.add(tContent);
 
-		//TODO add listener here
-		System.out.println("results " + this.resultsPerPage);
 		loader.load(0, this.resultsPerPage);
 	}
 
@@ -91,13 +88,13 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		subjectsTree.unmask();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void notFound() {
 		QuadCoreForumWeb.SEARCH_STATE = false;
 		final TreePanel<SubjectModel> subjectsTree = (TreePanel<SubjectModel>)Registry.get("SubjectsTree");
 
 		subjectsTree.unmask();
 
-		System.out.println("Not found");
 	}
 
 	private void initializeGrid() 
@@ -109,7 +106,8 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		this.addToConfigs("title", "Title", 100);
 		this.addToConfigs("authorUserName", "Author", 100);
 		this.addToConfigs("content", "Content", 100);
-
+		this.addToConfigs("score", "Score", 100);
+		
 		ColumnModel cm = new ColumnModel(this.configs);
 		this.grid = new Grid<SearchHitModel>(this.store, cm);
 
@@ -119,8 +117,9 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 		this.grid.setAutoExpandMax(3000);
 		this.grid.setAutoExpandColumn("title");
 		this.grid.getView().setShowDirtyCells(false);
+		this.grid.setStripeRows(true);
 
-		grid.addListener(Events.OnMouseDown, new Listener<BaseEvent>() {
+		grid.addListener(Events.OnDoubleClick, new Listener<BaseEvent>() {
 			@SuppressWarnings("unchecked")
 			@Override
 			public void handleEvent(BaseEvent be) {
@@ -131,6 +130,10 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 					return;
 				}
 				else {
+					QuadCoreForumWeb.SEARCHING_MESSAGES = false;
+					QuadCoreForumWeb.SEARCH_STATE = false;
+
+					
 					QuadCoreForumWeb.SEARCH_STATE = true;
 				//	QuadCoreForumWeb.SEARCH_OF_THREADS_NOT_PERFORMED = false;
 					QuadCoreForumWeb.SEARCH_STATE_HIT = tModel;
@@ -191,20 +194,6 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 						subjectsTree.setExpanded(tCurrentInTree, true);
 					}
 
-					System.out.println("Path ============== ");
-					for (SubjectModel tSubject : tModel.getSubjectPath())
-						System.out.println(tSubject.getName());
-					System.out.println("------");
-					System.out.println(tModel.getMessageID());
-					System.out.println("------");
-					for (MessageModel tMessage : tModel.getMessagePath())
-						System.out.println(tMessage.getTitle());
-
-					//					System.out.println(tModel.getMessagePath());
-					//				System.out.println(tModel.getSubjectPath());
-					System.out.println("Path ============== ");
-
-
 
 				}
 
@@ -213,7 +202,6 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 
 		});
 
-		//TODO define a listener
 	}
 
 	private void addToConfigs(String value, String givenName, int width)
@@ -267,15 +255,10 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 						if(result.getTotalLength() == 0)
 						{
 							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-							System.out.println("AsyncSearchHitsTable - line 159. result.getTotalLength() == 0");
-							//TODO
 						}
 						else
 						{
 							QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-
-							System.out.println("AsyncSearchHitsTable - line 165. result.getTotalLength() != 0");
-							System.out.println(result.getTotalLength());
 							grid.getSelectionModel().select(0, false);
 						}
 					}
@@ -290,14 +273,12 @@ public class AsyncSearchHitsTableGrid extends LayoutContainer
 				}
 				else if (searchType.equals("content"))
 				{
-					System.out.println("Search by content");
 					QuadCoreForumWeb.SERVICE.searchByContent((PagingLoadConfig)loadConfig, searchPhrase, 
 							resultCallback);
 				}
 				else //search type unknown
 				{						
 					QuadCoreForumWeb.WORKING_STATUS.clearStatus("Not working");
-					System.out.println("Type '" + searchType +  "' is unknown");
 					return;
 				}
 			}

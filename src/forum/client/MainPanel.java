@@ -84,7 +84,6 @@ public class MainPanel extends LayoutContainer
 	}
 
 	private void initializeThreadsPanel() {
-		System.out.println("initttttttttttttttttttt");
 		SubjectTabItem tDefaultItem = new SubjectTabItem(null);
 		Registry.register("default", tDefaultItem);
 		mainContentPanel.add(tDefaultItem);
@@ -157,16 +156,15 @@ public class MainPanel extends LayoutContainer
 	public void changeLoginView() {
 		if (QuadCoreForumWeb.CONNECTED_USER_DATA.getType() == UserType.GUEST) {
 			this.miscellaneousPanel.setHeading("Hello Guest!");
-			//this.navigatorPanelToolbar.setVisible(true); // TODO : make false
 			this.subjectsGrid.setToolBarVisible(false);
-			QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(false);
+//			QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(false);
 
 		}
 		else {
 			this.miscellaneousPanel.setHeading("Hello " + QuadCoreForumWeb.CONNECTED_USER_DATA.getLastName() +
 					" " + QuadCoreForumWeb.CONNECTED_USER_DATA.getFirstName() + "!");
 			this.subjectsGrid.setToolBarVisible(QuadCoreForumWeb.CONNECTED_USER_DATA.getType() == UserType.ADMIN);
-			QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(true);
+//			QuadCoreForumWeb.SHOW_CONNECTED.setEnabled(true);
 
 		/*	if (QuadCoreForumWeb.CONNECTED_USER_DATA.getType() == UserType.ADMIN)
 				this.navigatorPanelToolbar.setVisible(true);
@@ -200,7 +198,7 @@ public class MainPanel extends LayoutContainer
 			Registry.register("NoTabExpand", 2L);
 		}
 		else*/
-			Registry.register("NoTabExpand", 1L);
+			Registry.register("NoTabExpand", true);
 //		QuadCoreForumWeb.SEARCH_STATE = false;
 		ContentPanel tMainViewPanel = ((ContentPanel)Registry.get("MainViewPanel")); 
 		tMainViewPanel.removeAll();

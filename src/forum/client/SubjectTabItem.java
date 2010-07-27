@@ -82,9 +82,7 @@ public class SubjectTabItem extends TabItem {
 
 		messagesTree = new AsyncMessagesTreeGrid(threadsTable);
 
-		System.out.println("ggggggggggggggggggggggggg " + messagesTree != null);
 		threadsTable.setMessagesTree(messagesTree);
-		System.out.println("ggggggggggggggggggggggggg " + messagesTree != null);
 
 		this.add(messagesTree, tSouthData);
 
@@ -108,21 +106,17 @@ public class SubjectTabItem extends TabItem {
 			@Override
 			public void handleEvent(BaseEvent be) {
 
-					System.out.println("Tab selected................................................................................");
+				if (Registry.get("NoTabExpand") != null) {
+					Registry.register("NoTabExpand", null);
+					return;
+				}
+	
+		/*		if (QuadCoreForumWeb.SEARCH_STATE && QuadCoreForumWeb.SEARCH_STATE_HIT.getSubjectPath()
+						.firstElement().getID() != SubjectTabItem.this.subject.getID())
+					return;*/
+				
 					if (SubjectTabItem.this.subject != null) {
-/*
-						System.out.println("'''''''''''''''''''''''''''''''''' " + Registry.get("NoTabExpand"));
-						if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") > 0)) {
-							System.out.println("enters and exits");
-							Registry.register("NoTabExpand", ((Long)Registry.get("NoTabExpand") - 1));
-							return;
-						}
-						else if ((Registry.get("NoTabExpand") != null) && ((Long)Registry.get("NoTabExpand") == 0)) {
-							Registry.register("NoTabExpand", null);
-							return;
-						}
-						*/
-						threadsTable.load(); // changing
+						threadsTable.load();
 						
 						
 					}
@@ -133,7 +127,8 @@ public class SubjectTabItem extends TabItem {
 	public void changeToolBarVisible() {
 		this.threadsTable.setToolBarVisible(QuadCoreForumWeb.CONNECTED_USER_DATA != null &&
 				QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST);
-
+		this.threadsTable.setButtonsEnableStatus();
+		
 		this.messagesTree.setToolBarVisible(QuadCoreForumWeb.CONNECTED_USER_DATA != null &&
 				QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST);
 
@@ -146,8 +141,13 @@ public class SubjectTabItem extends TabItem {
 					QuadCoreForumWeb.CONNECTED_USER_DATA.getType() != UserType.GUEST);
 		}
 
+		
+		if (!threadsPanel.isRendered())
+			threadsPanel.render(threadsPanel.getElement());
 		threadsPanel.setSize(threadsPanel.getWidth(), threadsPanel.getHeight() + 1);
 		threadsPanel.setSize(threadsPanel.getWidth(), threadsPanel.getHeight() - 1);
+		if (!messagesTree.isRendered())
+			messagesTree.render(messagesTree.getElement());
 
 		messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() + 1);
 		messagesTree.setSize(messagesTree.getWidth(), messagesTree.getHeight() - 1);

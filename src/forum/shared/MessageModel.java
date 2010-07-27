@@ -7,7 +7,6 @@ import java.io.Serializable;
 import java.util.Date;
 
 import com.extjs.gxt.ui.client.data.BaseTreeModel;
-import com.google.gwt.i18n.client.DateTimeFormat;
 
 /**
  * @author sepetnit

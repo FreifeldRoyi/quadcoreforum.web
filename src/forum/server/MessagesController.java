@@ -5,7 +5,6 @@ package forum.server;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
@@ -50,7 +49,6 @@ public class MessagesController {
 			Collection<UISubject> tRetrievedSubjects = facade.getSubjects(father == null? -1 : 
 				father.getID());
 			if (tRetrievedSubjects.isEmpty()) {
-				System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaa");
 				return toReturn;
 			}
 			else {
@@ -58,16 +56,13 @@ public class MessagesController {
 				while (iter.hasNext()) {
 					toReturn.add(subjectToSubjectModelConvertor(iter.next()));
 				}
-				System.out.println("cccccccc");
 				return toReturn;
 			}
 		}
 		catch (SubjectNotFoundException e) {
-			System.out.println("ddddddddddddddddddddddddd");
 			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
 		}
 		catch (DatabaseRetrievalException e) {
-			System.out.println("ddddddddddddddddddddddddd");
 			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 		}
 	}
@@ -81,7 +76,6 @@ public class MessagesController {
 			throw new forum.shared.exceptions.message.SubjectNotFoundException(e.getID());
 		}
 		catch (DatabaseRetrievalException e) {
-			System.out.println("ddddddddddddddddddddddddd");
 			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 		}
 	}
@@ -95,7 +89,6 @@ public class MessagesController {
 			throw new forum.shared.exceptions.message.ThreadNotFoundException(e.getThreadID());
 		}
 		catch (DatabaseRetrievalException e) {
-			System.out.println("ddddddddddddddddddddddddd");
 			throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 		}
 	}
@@ -299,11 +292,6 @@ public class MessagesController {
 			throws forum.shared.exceptions.message.SubjectNotFoundException,
 			forum.shared.exceptions.database.DatabaseRetrievalException {
 
-		System.out.println(loadConfig == null);
-		if (loadConfig != null) {
-			System.out.println(loadConfig.getOffset());
-			System.out.println(loadConfig.getLimit());
-		}
 
 		try {
 			Collection<UIThread> tThreads = facade.getThreads(fatherID);
@@ -355,12 +343,10 @@ public class MessagesController {
 	private String getAuthorUsername(UIMessage message) {
 		String toReturn = "<Author-Not-Found>";
 		try {
-			System.out.println("Trying to fetch author's user name");
 			toReturn = facade.getMemberByID(message.getAuthorID()).getUsername();
-			System.out.println("fetchin completed. author is: " + toReturn);
 		}
 		catch (Exception e) {
-			System.out.println("error has occured: " + e.getMessage());
+			// do nothing - return a default user-name
 		}
 		return toReturn;		
 	}
@@ -409,7 +395,6 @@ public class MessagesController {
 			{
 				rawHits = this.facade.searchByAuthor(this.facade.getMemberIdByUsernameAndOrEmail(searchPhrase, null),
 						0, Integer.MAX_VALUE);
-				System.out.println("raw Hits fetched");
 			} 
 			catch (forum.server.updatedpersistentlayer.pipe.user.exceptions.NotRegisteredException e) 
 			{
@@ -417,7 +402,6 @@ public class MessagesController {
 			}
 			catch (DatabaseRetrievalException e) 
 			{
-				System.out.println("I'm inside catch clause database retrieval exception");
 				throw new forum.shared.exceptions.database.DatabaseRetrievalException();
 			}
 		}
@@ -457,10 +441,8 @@ public class MessagesController {
 			
 		if (rawHits != null)
 		{
-			System.out.println("Num of results is: " + rawHits.length);
 			for (SearchHit hit : rawHits)
 			{
-				System.out.println("" + hit.toString() + "\n");
 				toReturn.add(SearchHitToModelConvertor(hit));
 			}
 		}	
@@ -494,12 +476,8 @@ public class MessagesController {
 		
 			while (tMsg.getFatherID() != -1)
 			{
-				System.out.println("id = " + tMsg.getMessageID() +
-						" tmsg = " + tMsg.getTitle() + " father = " +
-						tMsg.getFatherID());
-				System.out.println("adddddddddddddddddddddddding to path");
 				tMsg = this.facade.getMessageByID(tMsg.getFatherID());
-				tMsgPath.add(this.messageToMessageModelConvertor(tMsg));
+				tMsgPath.push(this.messageToMessageModelConvertor(tMsg));
 			}
 			
 			UIThread tRawThread = this.facade.getThreadByID(tMsg.getMessageID(), false);
